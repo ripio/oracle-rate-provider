@@ -60,10 +60,10 @@ const markets = {
   uniswap: uniswap
 };
 
-module.exports.get = async (exchangeId) => {
+module.exports.get = async (data) => {
   let rate;
   try {
-    rate = await markets[exchangeId](exchangeId);
+    rate = await markets[data.exchangeId](data.exchangeId);
   } catch(e) {
     console.log('Error message: ' + e.message);
   }

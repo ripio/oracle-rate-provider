@@ -9,7 +9,7 @@ const env = require('./environment.js');
 async function main(){
   program
     .option(
-      '-s, --listPks <pks>',
+      '-p, --listPks <pks>',
       'An array of private keys',
       pks => pks.split(',')
     )
@@ -26,18 +26,15 @@ async function main(){
 
   const pks = program.listPks.concat(program.filePks);
 
-  await instanceSigners(pks);
   const oracleFactory = await instanceOracleFactory();
   const oracles = await instanceOracles(oracleFactory);
+  const signers = await instanceSigners(pks);
 
-  const provider = new Provider(w3, oracleFactory);
+  const provider = new Provider(w3, oracleFactory, oracles);
 
   for (;;) {
-    for(const oracle of oracles){
-      for(const signer of oracle.signers) {
-        provider.provideRate(oracle, signer);
-      }
-    }
+    for (let signer of signers)
+      provider.provideRates(signer);
 
     console.log('Wait: ' + env.wait);
     await sleep(env.wait);

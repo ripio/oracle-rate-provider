@@ -10,17 +10,75 @@ const nodes = {
   local: 'http://localhost:8545',
 };
 
-const accountsExchangeIds = [
-  'binance',
-  'gateio',
-  'gateio',
-  'huobipro',
-  'huobiru',
-  'binance',
-  'gateio',
-  'huobiru',//'uniswap',
-  'binance',//'kyber',
-  'gateio',//'uniswap'
+// For each signer haves an array of data
+// Each data contains an array of
+//    currency: The other part of the pair ETH/...
+//    exchangeId: The echange who provide the rate, look in ./src/rate.js
+const signersData = [
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    },
+    {
+      currency: 'BTC',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ],
+  [
+    {
+      currency: 'ETH',
+      exchangeId: 'binance',
+    }
+  ]
 ];
 
 const oracleFactory = {
@@ -216,9 +274,6 @@ const oracleFactory = {
 
 const oracle = {
   ropsten: {
-    symbols: [
-      'ETH'
-    ],
     contractName: 'MultiSourceOracle',
     abi: [
       {
@@ -431,6 +486,6 @@ module.exports = {
   node: nodes.infura.ropsten,
   oracleFactory: oracleFactory.ropsten,
   oracle: oracle.ropsten,
-  wait: 50000,
-  exchangeIds: accountsExchangeIds
+  signersData: signersData,
+  wait: 50000
 };
