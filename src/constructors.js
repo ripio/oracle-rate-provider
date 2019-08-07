@@ -46,6 +46,7 @@ module.exports.instanceSigners = async (pks) => {
 
     if(this.w3.utils.isHexStrict(pk)) {
       const signer = this.w3.eth.accounts.privateKeyToAccount(pk);
+      this.w3.eth.accounts.wallet.add(signer);
       signer.data = env.signersData[i];
       signers.push(signer);
     } else {
