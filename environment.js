@@ -17,63 +17,9 @@ const nodes = {
 const signersData = [
   [
     {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    },
-    {
       currency: 'BTC',
       exchangeId: 'binance',
-    }
-  ],
-  [
-    {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    }
-  ],
-  [
-    {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    }
-  ],
-  [
-    {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    }
-  ],
-  [
-    {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    }
-  ],
-  [
-    {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    }
-  ],
-  [
-    {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    }
-  ],
-  [
-    {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    }
-  ],
-  [
-    {
-      currency: 'ETH',
-      exchangeId: 'binance',
-    }
-  ],
-  [
+    },
     {
       currency: 'ETH',
       exchangeId: 'binance',
@@ -83,7 +29,7 @@ const signersData = [
 
 const oracleFactory = {
   ropsten: {
-    address: '0xf8015eA8c66d6238b0B22788468407a7360AaE5e',
+    address: '0x6d412cd92558301f69F82996630a340b6BC2a9cD',
     contractName: 'OracleFactory',
     abi: [
       {
@@ -173,6 +119,62 @@ const oracleFactory = {
         'anonymous': false,
         'inputs': [
           {
+            'indexed': false,
+            'name': '_oracle',
+            'type': 'address'
+          },
+          {
+            'indexed': false,
+            'name': '_signer',
+            'type': 'address'
+          }
+        ],
+        'name': 'AddSigner',
+        'type': 'event'
+      },
+      {
+        'anonymous': false,
+        'inputs': [
+          {
+            'indexed': false,
+            'name': '_oracle',
+            'type': 'address'
+          },
+          {
+            'indexed': false,
+            'name': '_signer',
+            'type': 'address'
+          }
+        ],
+        'name': 'RemoveSigner',
+        'type': 'event'
+      },
+      {
+        'anonymous': false,
+        'inputs': [
+          {
+            'indexed': false,
+            'name': '_oracle',
+            'type': 'address'
+          },
+          {
+            'indexed': false,
+            'name': '_signer',
+            'type': 'address'
+          },
+          {
+            'indexed': false,
+            'name': '_rate',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'Provide',
+        'type': 'event'
+      },
+      {
+        'anonymous': false,
+        'inputs': [
+          {
             'indexed': true,
             'name': '_from',
             'type': 'address'
@@ -191,6 +193,22 @@ const oracleFactory = {
         'inputs': [
           {
             'name': '_symbol',
+            'type': 'string'
+          },
+          {
+            'name': '_name',
+            'type': 'string'
+          },
+          {
+            'name': '_decimals',
+            'type': 'uint256'
+          },
+          {
+            'name': '_token',
+            'type': 'address'
+          },
+          {
+            'name': '_maintainer',
             'type': 'string'
           }
         ],
@@ -244,11 +262,11 @@ const oracleFactory = {
             'type': 'address'
           },
           {
-            'name': '_rate',
-            'type': 'uint256'
+            'name': '_name',
+            'type': 'string'
           }
         ],
-        'name': 'provide',
+        'name': 'setName',
         'outputs': [],
         'payable': false,
         'stateMutability': 'nonpayable',
@@ -258,17 +276,39 @@ const oracleFactory = {
         'constant': false,
         'inputs': [
           {
-            'name': '_data',
-            'type': 'bytes32[]'
+            'name': '_oracle',
+            'type': 'address'
+          },
+          {
+            'name': '_maintainer',
+            'type': 'string'
           }
         ],
-        'name': 'provideMultiple',
+        'name': 'setMaintainer',
+        'outputs': [],
+        'payable': false,
+        'stateMutability': 'nonpayable',
+        'type': 'function'
+      },
+      {
+        'constant': false,
+        'inputs': [
+          {
+            'name': '_oracle',
+            'type': 'address'
+          },
+          {
+            'name': '_rate',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'provide',
         'outputs': [],
         'payable': false,
         'stateMutability': 'nonpayable',
         'type': 'function'
       }
-    ],
+    ]
   }
 };
 
@@ -276,6 +316,164 @@ const oracle = {
   ropsten: {
     contractName: 'MultiSourceOracle',
     abi: [
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'sizeOf',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [
+          {
+            'name': '_id',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'getValue',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': false,
+        'inputs': [
+          {
+            'name': '_addr',
+            'type': 'address'
+          },
+          {
+            'name': '_value',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'newNode',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'nonpayable',
+        'type': 'function'
+      },
+      {
+        'constant': false,
+        'inputs': [
+          {
+            'name': '_id',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'remove',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'nonpayable',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [
+          {
+            'name': '_id',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'getNode',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'bool'
+          },
+          {
+            'name': '',
+            'type': 'uint256'
+          },
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [
+          {
+            'name': '_id',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'exists',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'bool'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [
+          {
+            'name': '_id',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'getNextNode',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'bool'
+          },
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'median',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
       {
         'constant': true,
         'inputs': [
@@ -303,6 +501,34 @@ const oracle = {
           {
             'name': '',
             'type': 'address'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': false,
+        'inputs': [
+          {
+            'name': '_id',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'insert',
+        'outputs': [],
+        'payable': false,
+        'stateMutability': 'nonpayable',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'id',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
           }
         ],
         'payable': false,
@@ -338,10 +564,83 @@ const oracle = {
         'type': 'function'
       },
       {
+        'constant': true,
         'inputs': [],
+        'name': 'VERSION',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'inputs': [
+          {
+            'name': '_symbol',
+            'type': 'string'
+          },
+          {
+            'name': '_name',
+            'type': 'string'
+          },
+          {
+            'name': '_decimals',
+            'type': 'uint256'
+          },
+          {
+            'name': '_token',
+            'type': 'address'
+          },
+          {
+            'name': '_currency',
+            'type': 'bytes32'
+          },
+          {
+            'name': '_maintainer',
+            'type': 'string'
+          }
+        ],
         'payable': false,
         'stateMutability': 'nonpayable',
         'type': 'constructor'
+      },
+      {
+        'anonymous': false,
+        'inputs': [
+          {
+            'indexed': false,
+            'name': '_prev',
+            'type': 'string'
+          },
+          {
+            'indexed': false,
+            'name': '_new',
+            'type': 'string'
+          }
+        ],
+        'name': 'SetName',
+        'type': 'event'
+      },
+      {
+        'anonymous': false,
+        'inputs': [
+          {
+            'indexed': false,
+            'name': '_prev',
+            'type': 'string'
+          },
+          {
+            'indexed': false,
+            'name': '_new',
+            'type': 'string'
+          }
+        ],
+        'name': 'SetMaintainer',
+        'type': 'event'
       },
       {
         'anonymous': false,
@@ -361,6 +660,169 @@ const oracle = {
         'type': 'event'
       },
       {
+        'anonymous': false,
+        'inputs': [
+          {
+            'indexed': false,
+            'name': '_id',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'AddNode',
+        'type': 'event'
+      },
+      {
+        'anonymous': false,
+        'inputs': [
+          {
+            'indexed': false,
+            'name': '_id',
+            'type': 'uint256'
+          }
+        ],
+        'name': 'RemoveNode',
+        'type': 'event'
+      },
+      {
+        'constant': true,
+        'inputs': [
+          {
+            'name': '',
+            'type': 'bytes'
+          }
+        ],
+        'name': 'readSample',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          },
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'readSample',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          },
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'symbol',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'string'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'name',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'string'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'decimals',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'uint256'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'token',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'address'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'currency',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'bytes32'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'maintainer',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'string'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': true,
+        'inputs': [],
+        'name': 'url',
+        'outputs': [
+          {
+            'name': '',
+            'type': 'string'
+          }
+        ],
+        'payable': false,
+        'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
         'constant': true,
         'inputs': [
           {
@@ -371,24 +833,44 @@ const oracle = {
         'name': 'getProvided',
         'outputs': [
           {
-            'name': '_topHeap',
-            'type': 'bool'
-          },
-          {
-            'name': '_botHeap',
-            'type': 'bool'
-          },
-          {
             'name': '_rate',
             'type': 'uint256'
           },
           {
-            'name': '_indexHeap',
+            'name': '_index',
             'type': 'uint256'
           }
         ],
         'payable': false,
         'stateMutability': 'view',
+        'type': 'function'
+      },
+      {
+        'constant': false,
+        'inputs': [
+          {
+            'name': '_name',
+            'type': 'string'
+          }
+        ],
+        'name': 'setName',
+        'outputs': [],
+        'payable': false,
+        'stateMutability': 'nonpayable',
+        'type': 'function'
+      },
+      {
+        'constant': false,
+        'inputs': [
+          {
+            'name': '_maintainer',
+            'type': 'string'
+          }
+        ],
+        'name': 'setMaintainer',
+        'outputs': [],
+        'payable': false,
+        'stateMutability': 'nonpayable',
         'type': 'function'
       },
       {
@@ -435,47 +917,6 @@ const oracle = {
         'outputs': [],
         'payable': false,
         'stateMutability': 'nonpayable',
-        'type': 'function'
-      },
-      {
-        'constant': true,
-        'inputs': [
-          {
-            'name': '',
-            'type': 'bytes'
-          }
-        ],
-        'name': 'readSample',
-        'outputs': [
-          {
-            'name': '',
-            'type': 'uint256'
-          },
-          {
-            'name': '',
-            'type': 'uint256'
-          }
-        ],
-        'payable': false,
-        'stateMutability': 'view',
-        'type': 'function'
-      },
-      {
-        'constant': true,
-        'inputs': [],
-        'name': 'readSample',
-        'outputs': [
-          {
-            'name': '_tokens',
-            'type': 'uint256'
-          },
-          {
-            'name': '_equivalent',
-            'type': 'uint256'
-          }
-        ],
-        'payable': false,
-        'stateMutability': 'view',
         'type': 'function'
       }
     ],
