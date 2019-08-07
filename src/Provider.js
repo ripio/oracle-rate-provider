@@ -11,7 +11,7 @@ module.exports = class Provider {
   async provideRate(oracle, signer) {
     const rate = await Rate.get(env.exchangeIds[signer.index]);
 
-    if(rate == 0){
+    if(!rate){
       console.log('Wrong rate: ' + rate.toString());
       return;
     }

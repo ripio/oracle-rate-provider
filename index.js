@@ -9,24 +9,24 @@ const env = require('./environment.js');
 async function main(){
   program
     .option(
-      '-s, --listSeeds <seeds>',
-      'An array of seeds(private keys or entropy strings)',
-      seeds => seeds.split(',')
+      '-s, --listPks <pks>',
+      'An array of private keys',
+      pks => pks.split(',')
     )
     .option(
-      '-f, --fileSeeds <path>',
-      'The path of a file with an array of seeds(private keys or entropy strings)',
+      '-f, --filePks <path>',
+      'The path of a file with an array of private keys',
       path => require(path)
     );
 
   program.parse(process.argv);
 
-  if (program.listSeeds === undefined) program.listSeeds = [];
-  if (program.fileSeeds === undefined) program.fileSeeds = [];
+  if (!program.listPks) program.listPks = [];
+  if (!program.filePks) program.filePks = [];
 
-  const listSeeds = program.listSeeds.concat(program.fileSeeds);
+  const pks = program.listPks.concat(program.filePks);
 
-  await instanceSigners(listSeeds);
+  await instanceSigners(pks);
   const oracleFactory = await instanceOracleFactory();
   const oracles = await instanceOracles(oracleFactory);
 

@@ -4,18 +4,22 @@ const env = require('../environment.js');
 
 module.exports.w3 = new W3(new W3.providers.HttpProvider(env.node));
 
-module.exports.instanceSigners = async (listSeeds) => {
-  for (const seed of listSeeds) {
-    let signer;
+module.exports.instanceSigners = async (pks) => {
+  if (!(pks && pks.length)) throw new Error('There are no private keys to instance the signers');
 
-    if(this.w3.utils.isHexStrict(seed)) {
-      signer = this.w3.eth.accounts.privateKeyToAccount(seed);
+  for (const pk of pks) {
+    if(this.w3.utils.isHexStrict(pk)) {
+      const signer = this.w3.eth.accounts.privateKeyToAccount(pk);
+      this.w3.eth.accounts.wallet.add(signer);
     } else {
-      signer = this.w3.eth.accounts.create(seed);
+      console.log('The private key its not valid: ' + pk);
     }
-
-    this.w3.eth.accounts.wallet.add(signer);
   }
+
+  const wallets = [];
+  for (let i = 0; i < this.w3.eth.accounts.wallet.length; i++)
+    wallets.push(this.w3.eth.accounts.wallet[i].address);
+  console.log('All signers: \n\t' + wallets.join('\n\t'));
 };
 
 module.exports.instanceOracleFactory = async () => {
@@ -38,7 +42,10 @@ module.exports.instanceOracles = async (oracleFactory) => {
     oracles.push(oracle);
 
     console.log('Oracle: ' + symbol + ', Address: ' + oracleAddr);
-    console.log('Signers: \n\t' + oracle.signers.map(x => x.address).join('\n\t'));
+    if(oracle.signers && oracle.signers.length)
+      console.log('Signers: \n\t' + oracle.signers.map(x => x.address).join('\n\t'));
+    else
+      console.log('\tThe oracle dont have signers');
   }
 
   return oracles;
