@@ -9,16 +9,21 @@ module.exports = class Provider {
 
   async provideRates(signer) {
     for (let data of signer.data) {
+      if(!this.oracles[data.currency]){
+        console.log('Wrong currency: ' + data.currency);
+        continue;
+      }
       const rate = await Rate.get(data);
       if(!rate){
         console.log('Wrong rate: ' + rate.toString());
-        return;
+        continue;
       }
 
       const gasPrice = await this.w3.eth.getGasPrice();
       const gasEstimate = await this.oracleFactory.methods.provide(this.oracles[data.currency]._address, rate.toString()).estimateGas(
         { from: signer.address }
       );
+
       const log = 'Provide(signer: ' + signer.address + ', rate: ' + rate + ')';
 
       try {
