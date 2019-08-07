@@ -31,15 +31,6 @@ module.exports.instanceOracles = async (oracleFactory) => {
   return oracles;
 };
 
-//if(oracle.signers && oracle.signers.length)
-//  console.log('Signers: \n\t' + oracle.signers.map(x => x.address).join('\n\t'));
-//else
-//  console.log('\tThe oracle dont have signers');
-//
-  //  for (let i = 0; i < signers.length; i++)
-  //    if (await oracle.methods.isSigner(signers[i].address).call())
-  //      oracle.signers.push(signers[i]);
-
 module.exports.instanceSigners = async (pks) => {
   if (!(pks && pks.length)) throw new Error('There are no private keys to instance the signers: ' + pks);
 
