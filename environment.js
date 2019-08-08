@@ -928,5 +928,5 @@ module.exports = {
   oracleFactory: oracleFactory.ropsten,
   oracle: oracle.ropsten,
   signersData: signersData,
-  wait: 50000
+  wait: 15 * 60 * 1000 // 15 min
 };
