@@ -17,14 +17,16 @@ module.exports.instanceOracles = async (oracleFactory) => {
       .map(x => x.currency)
   );
 
+  console.log('All oracles:');
+
   for (const symbol of symbols) {
     const oracleAddr = await oracleFactory.methods.symbolToOracle(symbol).call();
     if (oracleAddr === '0x0000000000000000000000000000000000000000') {
-      console.log('The oracle of \'' + symbol + '\' dont exists');
+      console.log('\tCurrency: ' + symbol + ', the oracle dont exists');
     } else {
       const oracle = new this.w3.eth.Contract(env.oracle.abi, oracleAddr);
       oracles[symbol] = oracle;
-      console.log('Oracle: ' + symbol + ', Address: ' + oracleAddr);
+      console.log('\tCurrency: ' + symbol + ', Address: ' + oracleAddr);
     }
   }
 
