@@ -1,10 +1,11 @@
-const Rate = require('./rate.js');
+const Markets = require('./Markets.js');
 
 module.exports = class Provider {
   constructor(w3, oracleFactory, oracles) {
     this.w3 = w3;
     this.oracleFactory = oracleFactory;
     this.oracles = oracles;
+    this.markets = new Markets(w3);
   }
 
   async provideRates(signer) {
@@ -13,7 +14,8 @@ module.exports = class Provider {
         console.log('Wrong currency: ' + data.currency);
         continue;
       }
-      const rate = await Rate.get(data);
+
+      const rate = await this.markets.getRate(data);
       if(!rate){
         console.log('Wrong rate: ' + rate.toString());
         continue;
