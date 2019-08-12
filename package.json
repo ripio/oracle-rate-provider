@@ -20,7 +20,6 @@
     "ccxt": "^1.18.997",
     "commander": "^2.20.0",
     "marmojs": "^0.2.19",
-    "nodemon": "^1.19.1",
     "web3": "1.0.0-beta.55"
   },
   "devDependencies": {
