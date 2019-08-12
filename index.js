@@ -1,5 +1,5 @@
 const program = require('commander');
-
+const Marmo = require('marmojs');
 const Provider = require('./src/Provider.js');
 const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 const { sleep } = require('./src/utils.js');
@@ -31,13 +31,17 @@ async function main(){
   const signers = await instanceSigners(pks);
 
   const provider = new Provider(w3, oracleFactory, oracles);
+  Marmo.DefaultConf.ROPSTEN.asDefault();
 
   for (;;) {
-    for (let signer of signers)
+    
+    for (let signer of signers) {
       provider.provideRates(signer);
+    }
 
     console.log('Wait: ' + env.wait);
     await sleep(env.wait);
+
   }
 }
 
