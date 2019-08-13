@@ -30,11 +30,11 @@ async function main(){
   const oracles = await instanceOracles(oracleFactory);
   const signers = await instanceSigners(pks);
 
-  const provider = new Provider(w3, oracleFactory, oracles);
+  const provider = await new Provider(w3, oracleFactory, oracles).init();
   Marmo.DefaultConf.ROPSTEN.asDefault();
 
   for (;;) {
-    
+
     for (let signer of signers) {
       provider.provideRates(signer);
     }

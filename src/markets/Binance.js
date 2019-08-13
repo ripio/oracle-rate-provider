@@ -10,6 +10,6 @@ module.exports = class Binanace extends Market {
 
   async getRate(currency) {
     const pair = await this.market.fetchTicker('RCN/' + currency);
-    return pair.info.lastPrice;
+    return this.toEquivalent(pair.info.lastPrice);
   }
 };
