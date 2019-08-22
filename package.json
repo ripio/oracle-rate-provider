@@ -19,7 +19,8 @@
   "dependencies": {
     "ccxt": "^1.18.997",
     "commander": "^2.20.0",
-    "web3": "^1.2.0"
+    "marmojs": "^0.2.19",
+    "web3": "^1.2.1"
   },
   "devDependencies": {
     "eslint": "^5.16.0",

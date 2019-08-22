@@ -13,7 +13,6 @@ module.exports.instanceOracles = async (oracleFactory) => {
 
   const symbols = new Set(
     env.signersData
-      .reduce((prev, x) => prev.concat(x))
       .map(x => x.currency)
   );
 
@@ -33,30 +32,27 @@ module.exports.instanceOracles = async (oracleFactory) => {
   return oracles;
 };
 
-module.exports.instanceSigners = async (pks) => {
-  if (!(pks && pks.length)) throw new Error('There are no private keys to instance the signers: ' + pks);
+module.exports.instanceSigners = async (pk) => {
+  if (!(pk)) throw new Error('There are no private keys to instance the signers: ' + pk);
 
-  if (pks.length !== env.signersData.length) throw new Error(
-    'The length of the signersData must be equal than the pks: \n' +
-    '\t' + pks.length + ' pks length\n' +
-    '\t' + env.signersData.length + ' env.signersData length'
-  );
+  // if (pks.length !== env.signersData.length) throw new Error(
+  //   'The length of the signersData must be equal than the pks: \n' +
+  //   '\t' + pks.length + ' pks length\n' +
+  //   '\t' + env.signersData.length + ' env.signersData length'
+  // );
 
-  const signers = [];
-  for (let i = 0; i < pks.length; i++) {
-    const pk = pks[i];
 
-    if(this.w3.utils.isHexStrict(pk)) {
-      const signer = this.w3.eth.accounts.privateKeyToAccount(pk);
-      this.w3.eth.accounts.wallet.add(signer);
-      signer.data = env.signersData[i];
-      signers.push(signer);
-    } else {
-      console.log('The private key its not valid: ' + pk);
-    }
+  let signer;
+  if (this.w3.utils.isHexStrict(pk)) {
+    signer = this.w3.eth.accounts.privateKeyToAccount(pk);
+    this.w3.eth.accounts.wallet.add(signer);
+    signer.data = env.signersData;
+  } else {
+    console.log('The private key its not valid: ' + pk);
   }
 
-  console.log('All signers: \n\t' + signers.map(x => x.address).join('\n\t'));
 
-  return signers;
+  // console.log('All signers: \n\t' + signers.map(x => x.address).join('\n\t'));
+
+  return signer;
 };

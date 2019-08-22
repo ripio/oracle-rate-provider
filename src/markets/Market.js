@@ -4,7 +4,11 @@ module.exports = class Market {
   }
 
   bn (number) {
-    return new this.w3.utils.BN(number);
+    return this.w3.utils.toBN(number);
+  }
+
+  toEquivalent (rate) {
+    return this.bn(rate * 10 ** 18).toString();
   }
 
   async getRate() {
