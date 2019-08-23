@@ -22,8 +22,6 @@ module.exports = class Provider {
     var median = 0, rateLen = rates.length;
     rates.sort();
 
-    console.log('All rates sorted', rates);
-
     if (
       rateLen % 2 === 0 // is even
     ) {
@@ -33,7 +31,6 @@ module.exports = class Provider {
 
       median =  (num1.add(num2)).div(this.bn(2)).toString();
 
-      console.log('Median', median);
     } else { // is odd
       // middle number only
       median = rates[(rateLen - 1) / 2];
@@ -44,7 +41,6 @@ module.exports = class Provider {
 
   async provideRates(signer) {
 
-    console.log('signer data', signer.data);
     let data = signer.data;
 
     for (var currencydata of data) {
@@ -63,24 +59,15 @@ module.exports = class Provider {
           exchangeId: exchange
         };
 
-        console.log('rateData', rateData);
-
         const rate = await marketManager.getRate(rateData);
         if (rate) {
           rates.push(rate);
         } else {
           console.log('Wrong rate: ' + rate);
         }
-        console.log('ExchangeId', exchange);
-        console.log('rate', rate);
-        console.log(rates);
       }
 
-      console.log('AllRates', rates);
-
       const medianRate = await this.getMedian(rates);
-
-      console.log('medianRate ', medianRate);
 
       const address = this.oracles[currencydata.currency]._address;
       if (!address) {
@@ -88,16 +75,16 @@ module.exports = class Provider {
       }
 
       console.log('Starting send transaction with marmo');
+      console.log('currency: ' + currencydata.currency + ' , median rate: ' + medianRate);
+
 
       const gasPrice = await this.w3.eth.getGasPrice();
-      //console.log('GasPrice: ', gasPrice);
       const gasEstimate = await this.oracleFactory.methods.provide(address, medianRate).estimateGas(
         { from: signer.address }
       );
-      // console.log('GasEstimate: ', gasEstimate);
-      // 20% more than gas estimate 
-      // FIXME
-      const moreGasEstimate = (gasEstimate * 1.2).toFixed(0);
+
+      // 10% more than gas estimate 
+      const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
       // console.log('MoreGasEstimate: ', moreGasEstimate);
       const log = 'Provide(signer: ' + signer.address + ', rate: ' + medianRate + ')';
 

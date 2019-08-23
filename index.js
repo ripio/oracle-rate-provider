@@ -7,7 +7,6 @@ const { sleep } = require('./src/utils.js');
 const env = require('./environment.js');
 
 async function main() {
-  console.log('Sleep before start', process.env.SLEEP_FIRST);
   await sleep(process.env.SLEEP_FIRST);
 
   program
@@ -41,12 +40,10 @@ async function main() {
   for (;;) {
     provider.provideRates(signer);
 
-    console.log('Env wait', process.env.WAIT);
-    console.log('Wait: ' + env.wait);
+    console.log('Wait: ' + env.wait + 'ms');
     await sleep(env.wait);
 
   }
 }
-
 
 main();
