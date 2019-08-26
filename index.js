@@ -27,7 +27,6 @@ async function main() {
   if (!program.filePks) program.filePks = [];
 
 
-  // const pks = program.listPks.concat(program.filePks);
   const pks = process.env.PK;
 
   const oracleFactory = await instanceOracleFactory();

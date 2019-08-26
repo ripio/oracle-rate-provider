@@ -23,16 +23,14 @@ module.exports = class Provider {
     rates.sort();
 
     if (
-      rateLen % 2 === 0 // is even
+      rateLen % 2 === 0 
     ) {
-      // average of two middle numbers
       const num1 = this.bn(rates[this.bn(rateLen).div(this.bn(2)) - 1]);
       const num2 = this.bn(rates[this.bn(rateLen).div(this.bn(2))]);
 
       median =  (num1.add(num2)).div(this.bn(2)).toString();
 
-    } else { // is odd
-      // middle number only
+    } else { 
       median = rates[(rateLen - 1) / 2];
     }
 
@@ -85,7 +83,6 @@ module.exports = class Provider {
 
       // 10% more than gas estimate 
       const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
-      // console.log('MoreGasEstimate: ', moreGasEstimate);
       const log = 'Provide(signer: ' + signer.address + ', rate: ' + medianRate + ')';
 
       try {

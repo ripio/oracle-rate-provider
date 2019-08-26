@@ -35,13 +35,6 @@ module.exports.instanceOracles = async (oracleFactory) => {
 module.exports.instanceSigners = async (pk) => {
   if (!(pk)) throw new Error('There are no private keys to instance the signers: ' + pk);
 
-  // if (pks.length !== env.signersData.length) throw new Error(
-  //   'The length of the signersData must be equal than the pks: \n' +
-  //   '\t' + pks.length + ' pks length\n' +
-  //   '\t' + env.signersData.length + ' env.signersData length'
-  // );
-
-
   let signer;
   if (this.w3.utils.isHexStrict(pk)) {
     signer = this.w3.eth.accounts.privateKeyToAccount(pk);
@@ -50,9 +43,6 @@ module.exports.instanceSigners = async (pk) => {
   } else {
     console.log('The private key its not valid: ' + pk);
   }
-
-
-  // console.log('All signers: \n\t' + signers.map(x => x.address).join('\n\t'));
 
   return signer;
 };
