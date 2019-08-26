@@ -1,7 +1,7 @@
 const Market = require('./Market.js');
 const ccxt = require ('ccxt');
 
-module.exports = class Binanace extends Market {
+module.exports = class HoubiPro extends Market {
   constructor(w3, exchangeId) {
     super(w3);
 
@@ -10,6 +10,6 @@ module.exports = class Binanace extends Market {
 
   async getRate(currency) {
     const pair = await this.market.fetchTicker('RCN/' + currency);
-    return this.toEquivalent(pair.info.lastPrice);
+    return this.toEquivalent(pair.last);
   }
 };
