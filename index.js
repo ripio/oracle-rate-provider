@@ -4,11 +4,7 @@ const Provider = require('./src/Provider.js');
 const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 const { sleep } = require('./src/utils.js');
 
-const env = require('./environment.js');
-
 async function main() {
-  await sleep(process.env.SLEEP_FIRST);
-
   program
     .option(
       '-p, --PK <pk>',
@@ -21,7 +17,8 @@ async function main() {
     )
     .option(
       '-w, --wait <wait>',
-      'The time to wait for a new provide'
+      'The time to wait for a new provide',
+      15
     );
 
   program.parse(process.argv);
