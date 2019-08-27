@@ -9,8 +9,20 @@ module.exports = class Provider {
     this.MarketsManager = null;
   }
 
-  bn (number) {
+  bn(number) {
     return this.w3.utils.toBN(number);
+  }
+
+  toUint96(number) {
+    const hex = number.toString(16);
+    return `0x${'0'.repeat(24 - hex.length)}${hex}`;
+  }
+
+  logRates(providedData, signer) {
+    for (var currencyData of providedData) {
+      const log = 'Provide(signer: ' + signer.address + ',  oracle: ' + currencyData.oracle + ',  rate: ' + currencyData.rate + ')';
+      console.log(log);
+    }     
   }
 
   async init() {
@@ -23,31 +35,37 @@ module.exports = class Provider {
     rates.sort();
 
     if (
-      rateLen % 2 === 0 
+      rateLen % 2 === 0
     ) {
       const num1 = this.bn(rates[this.bn(rateLen).div(this.bn(2)) - 1]);
       const num2 = this.bn(rates[this.bn(rateLen).div(this.bn(2))]);
 
-      median =  (num1.add(num2)).div(this.bn(2)).toString();
+      median = (num1.add(num2)).div(this.bn(2)).toString();
 
-    } else { 
+    } else {
       median = rates[(rateLen - 1) / 2];
     }
 
     return median;
   }
 
-  async provideRates(signer) {
 
-    let data = signer.data;
+  async getMarketsRates(data) {
+    const marketManager = this.MarketsManager;
+
+    let medianRates = [];
 
     for (var currencydata of data) {
 
+      // Check currency
       if (!this.oracles[currencydata.currency]) {
         console.log('Wrong currency: ' + currencydata.currency);
       }
-
-      const marketManager = this.MarketsManager;
+      // Check address
+      const address = this.oracles[currencydata.currency]._address;
+      if (!address) {
+        console.log('Wrong address: ' + address);
+      }
 
       let rates = [];
 
@@ -67,32 +85,55 @@ module.exports = class Provider {
 
       const medianRate = await this.getMedian(rates);
 
-      const address = this.oracles[currencydata.currency]._address;
-      if (!address) {
-        console.log('Wrong address: ' + address);
-      }
+      const providedData = {
+        oracle: address,
+        rate: medianRate
+      };
 
-      console.log('Starting send transaction with marmo');
-      console.log('currency: ' + currencydata.currency + ' , median rate: ' + medianRate);
+      medianRates.push(providedData);
+    }
 
+    return medianRates;
+  }
 
-      const gasPrice = await this.w3.eth.getGasPrice();
-      const gasEstimate = await this.oracleFactory.methods.provide(address, medianRate).estimateGas(
-        { from: signer.address }
+  async getMultipleProvideData(providedData) {
+    let ratesProvided = [];
+
+    for (var currencyData of providedData) {
+      const rateProvided = `${this.toUint96(currencyData.rate)}${currencyData.oracle.replace('0x', '')}`;
+      ratesProvided.push(rateProvided);
+    }
+
+    return ratesProvided;
+  }
+
+  async provideRates(signer) {
+
+    const providedData = await this.getMarketsRates(signer.data);
+    console.log('providedData', providedData);
+    const multipleProvideData = await this.getMultipleProvideData(providedData);
+
+    const gasPrice = await this.w3.eth.getGasPrice();
+    const gasEstimate = await this.oracleFactory.methods.provideMultiple(multipleProvideData).estimateGas(
+      { from: signer.address }
+    );
+
+    // 10% more than gas estimate 
+    const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
+
+    console.log('Starting send transaction with marmo');
+
+    try {
+      const tx = await this.oracleFactory.methods.provideMultiple(multipleProvideData).send(
+        { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
       );
+      
+      console.log('tx success');
+      this.logRates(providedData, signer);  
 
-      // 10% more than gas estimate 
-      const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
-      const log = 'Provide(signer: ' + signer.address + ', rate: ' + medianRate + ')';
-
-      try {
-        const tx = await this.oracleFactory.methods.provide(address, medianRate).send(
-          { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-        );
-        console.log(log + ', txHash: ' + tx.transactionHash);
-      } catch (e) {
-        console.log('Error: ' + log + ' Error message: ' + e.message);
-      }
+      console.log('txHash: ' + tx.transactionHash);
+    } catch (e) {
+      console.log(' Error message: ' + e.message);
     }
   }
 };
