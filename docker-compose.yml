@@ -1,9 +1,8 @@
 version: '3'
 services:
-  provider_1:
+  provider:
     build: .
     image: provider 
     environment:  
       - WAIT=${WAIT_TIME}
       - PK=${PRIVATE_KEY}
-      - SLEEP_FIRST=${SLEEP_BEFORE_START}
