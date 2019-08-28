@@ -35,7 +35,7 @@ async function main() {
   Marmo.DefaultConf.ROPSTEN.asDefault();
 
   for (;;) {
-    provider.provideRates(signer);
+    await provider.provideRates(signer);
 
     console.log('Wait: ' + waitMs + 'ms');
     await sleep(waitMs);

@@ -7,6 +7,7 @@ module.exports = class Provider {
     this.oracleFactory = oracleFactory;
     this.oracles = oracles;
     this.MarketsManager = null;
+    this.ratesProvided = [];
   }
 
   bn(number) {
@@ -21,6 +22,13 @@ module.exports = class Provider {
   logRates(providedData, signer) {
     for (var currencyData of providedData) {
       const log = 'Provide(signer: ' + signer.address + ',  oracle: ' + currencyData.oracle + ',  rate: ' + currencyData.rate + ')';
+      console.log(log);
+    }     
+  }
+
+  logMarketMedianRates() {
+    for (var currencyData of this.ratesProvided) {
+      const log = ' Median Rate ' + currencyData.currency + ': ' + currencyData.rate + ' from markets: ' + currencyData.markets;
       console.log(log);
     }     
   }
@@ -55,6 +63,8 @@ module.exports = class Provider {
 
     let medianRates = [];
 
+    console.log('Gathering Market data...');
+
     for (var currencydata of data) {
 
       // Check currency
@@ -85,6 +95,12 @@ module.exports = class Provider {
 
       const medianRate = await this.getMedian(rates);
 
+      this.ratesProvided.push({
+        currency: currencydata.currency,
+        rate: medianRate,
+        markets: currencydata.exchangesIds
+      });
+
       const providedData = {
         oracle: address,
         rate: medianRate
@@ -100,7 +116,7 @@ module.exports = class Provider {
     let ratesProvided = [];
 
     for (var currencyData of providedData) {
-      const rateProvided = `${this.toUint96(currencyData.rate)}${currencyData.oracle.replace('0x', '')}`;
+      const rateProvided = `${this.toUint96(Number(currencyData.rate))}${currencyData.oracle.replace('0x', '')}`;
       ratesProvided.push(rateProvided);
     }
 
@@ -108,9 +124,10 @@ module.exports = class Provider {
   }
 
   async provideRates(signer) {
+    this.ratesProvided = [];
 
     const providedData = await this.getMarketsRates(signer.data);
-    console.log('providedData', providedData);
+    this.logMarketMedianRates();
     const multipleProvideData = await this.getMultipleProvideData(providedData);
 
     const gasPrice = await this.w3.eth.getGasPrice();
@@ -121,14 +138,13 @@ module.exports = class Provider {
     // 10% more than gas estimate 
     const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
 
-    console.log('Starting send transaction with marmo');
+    console.log('Starting send transaction with marmo...');
 
     try {
       const tx = await this.oracleFactory.methods.provideMultiple(multipleProvideData).send(
         { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
       );
-      
-      console.log('tx success');
+
       this.logRates(providedData, signer);  
 
       console.log('txHash: ' + tx.transactionHash);
