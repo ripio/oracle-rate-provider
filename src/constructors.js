@@ -13,7 +13,7 @@ module.exports.instanceOracles = async (oracleFactory) => {
 
   const symbols = new Set(
     env.signersData
-      .map(x => x.currency)
+      .map(x => x.currency_to)
   );
 
   console.log('All oracles:');

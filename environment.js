@@ -2,12 +2,16 @@ const ropstenContracts = require('./ropstenContracts.js');
 
 const signersData = [
   {
-    currency: 'ETH',
-    exchangesIds: ['binance', 'uniswap', 'huobipro', 'hitbtc']
+    currency_from: 'RCN',
+    currency_to: 'ETH',
+    exchangesIds: ['binance', 'uniswap', 'huobipro', 'hitbtc'],
+    direct: true 
   },
   {
-    currency: 'BTC',
-    exchangesIds: ['binance', 'huobipro', 'bittrex', 'upbit', 'hitbtc']
+    currency_from: 'RCN',
+    currency_to: 'BTC',
+    exchangesIds: ['binance', 'huobipro', 'bittrex', 'upbit', 'hitbtc'],
+    direct: true
   }
 ];
 
