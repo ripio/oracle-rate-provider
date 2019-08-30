@@ -10,6 +10,16 @@ module.exports = class Binanace extends Market {
 
   async getRate(currency_from, currency_to) {
     const pair = await this.market.fetchTicker(currency_from + '/' + currency_to);
-    return this.toEquivalent(pair.info.lastPrice);
+
+    let rate;
+    if (currency_to == 'USDT'){
+      rate = this.toEquivalent(pair.info.lastPrice, 2);
+      
+    } else {
+      rate = this.toEquivalent(pair.info.lastPrice, 18);
+    }
+
+    console.log('rate', rate);
+    return rate;
   }
 };

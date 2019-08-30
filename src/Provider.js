@@ -29,7 +29,7 @@ module.exports = class Provider {
 
   logMarketMedianRates() {
     for (var currencyData of this.ratesProvided) {
-      const log = ' Median Rate ' + currencyData.currency + ': ' + currencyData.rate + ' from markets: ' + currencyData.markets;
+      const log = ' Median Rate ' + currencyData.currency_to + ': ' + currencyData.rate + ' from markets: ' + currencyData.markets;
       console.log(log);
     }
   }
@@ -61,15 +61,15 @@ module.exports = class Provider {
   async getMedianFromMarkets(currencydata) {
     const marketManager = this.MarketsManager;
 
-    // Check currency
-    if (!this.oracles[currencydata.currency_to]) {
-      console.log('Wrong currency: ' + currencydata.currency);
-    }
-    // Check address
-    const address = this.oracles[currencydata.currency_to]._address;
-    if (!address) {
-      console.log('Wrong address: ' + address);
-    }
+    // // Check currency
+    // if (!this.oracles[currencydata.currency_to]) {
+    //   console.log('Wrong currency: ' + currencydata.currency);
+    // }
+    // // Check address
+    // const address = this.oracles[currencydata.currency_to]._address;
+    // if (!address) {
+    //   console.log('Wrong address: ' + address);
+    // }
 
     let rates = [];
 
@@ -92,32 +92,102 @@ module.exports = class Provider {
     const medianRate = await this.getMedian(rates);
 
     this.ratesProvided.push({
-      currency: currencydata.currency_to,
+      currency_from: currencydata.currency_from,
+      currency_to: currencydata.currency_to,
       rate: medianRate,
       markets: currencydata.exchangesIds
     });
 
     const providedData = {
-      oracle: address,
+      oracle: '0x13647913',
       rate: medianRate
     };
-    this.medianRates.push(providedData);
+
+    return providedData;
   }
 
-  
+  async getMedianFromMarketsIndirect(data, currencydata) {
+
+    let matchingFrom = [];
+    let matchingTo = [];
+    let providedData;
+
+    for (var pair of data) {
+         
+      if (pair.currency_from == currencydata.currency_from) {
+        matchingFrom.push(pair.currency_to);
+      }
+      if (pair.currency_to == currencydata.currency_to) {
+        matchingTo.push(pair.currency_from); 
+      }
+    }
+
+    console.log(matchingFrom);
+    console.log(matchingTo);
+
+    const matchingCurrencies = matchingFrom.filter(c => matchingTo.includes(c));
+    if (matchingCurrencies.length > 0) {
+      const matchCurrency = matchingCurrencies[0];
+      console.log('Matching currencies', matchCurrency);
+
+      console.log(this.ratesProvided);
+
+      const rateFromToMatching = this.ratesProvided.filter(rates =>
+        rates.currency_from == currencydata.currency_from && rates.currency_to == matchCurrency);
+
+      const rateMatchingTo = this.ratesProvided.filter(rates => 
+        rates.currency_from == matchCurrency && rates.currency_to == currencydata.currency_to);
+
+      console.log(rateFromToMatching[0].rate);  
+      console.log(rateMatchingTo[0].rate);
+       
+      
+      const medianRate = this.bn(rateFromToMatching[0].rate).mul(this.bn(rateMatchingTo[0].rate)).toString(); 
+
+      console.log('Median Rate', medianRate);
+
+      this.ratesProvided.push({
+        currency_from: currencydata.currency_from,
+        currency_to: currencydata.currency_to,
+        rate: medianRate,
+        markets: currencydata.exchangesIds
+      });
+      
+      providedData = {
+        oracle: '0x13647913',
+        rate: medianRate
+      };
+
+    }
+    return providedData;
+  }
+
+
+
+
+
   async getMarketsRates(data) {
 
     console.log('Gathering Market data...');
-
+    let providedData;
     for (var currencydata of data) {
 
-      if (currencydata.direct) {
-        await this.getMedianFromMarkets(currencydata);
+      switch (currencydata.type) {
+      case 'direct':
+        providedData = await this.getMedianFromMarkets(currencydata);
+        break;
+      case 'indirect':
+        providedData = await this.getMedianFromMarketsIndirect(data, currencydata);
+        break;
+      case 'double-indirect':
+        providedData = await this.getMedianFromMarketsIndirect(currencydata);
+        break;
+      default:
+        break;
       }
-      else {
-        // Get common currency values  
-      }
+      this.medianRates.push(providedData);
     }
+
     return this.medianRates;
   }
 
@@ -137,28 +207,31 @@ module.exports = class Provider {
 
     const providedData = await this.getMarketsRates(signer.data);
     this.logMarketMedianRates();
+    console.log('provided Data', providedData);
     const multipleProvideData = await this.getMultipleProvideData(providedData);
 
+    console.log(multipleProvideData);
+
     const gasPrice = await this.w3.eth.getGasPrice();
-    const gasEstimate = await this.oracleFactory.methods.provideMultiple(multipleProvideData).estimateGas(
-      { from: signer.address }
-    );
+    // const gasEstimate = await this.oracleFactory.methods.provideMultiple(multipleProvideData).estimateGas(
+    //   { from: signer.address }
+    // );
 
     // 10% more than gas estimate 
-    const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
+    // const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
 
     console.log('Starting send transaction with marmo...');
 
-    try {
-      const tx = await this.oracleFactory.methods.provideMultiple(multipleProvideData).send(
-        { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-      );
+    // try {
+    //   const tx = await this.oracleFactory.methods.provideMultiple(multipleProvideData).send(
+    //     { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+    //   );
 
-      this.logRates(providedData, signer);
+    //   this.logRates(providedData, signer);
 
-      console.log('txHash: ' + tx.transactionHash);
-    } catch (e) {
-      console.log(' Error message: ' + e.message);
-    }
+    //   console.log('txHash: ' + tx.transactionHash);
+    // } catch (e) {
+    //   console.log(' Error message: ' + e.message);
+    // }
   }
 };
