@@ -10,6 +10,15 @@ module.exports = class HitBTC extends Market {
 
   async getRate(currency_from, currency_to) {
     const pair = await this.market.fetchTicker(currency_from + '/' + currency_to);
-    return this.toEquivalent(pair.info.last);
+
+    let rate;
+    if (currency_to == 'USD' || currency_to == 'ARS'){
+      rate = this.toEquivalent(pair.info.last, 2);
+      
+    } else {
+      rate = this.toEquivalent(pair.info.last, 18);
+    }
+    return rate;
   }
+
 };

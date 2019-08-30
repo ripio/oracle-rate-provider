@@ -59,17 +59,20 @@ module.exports = class Provider {
   }
 
   async getMedianFromMarkets(currencydata) {
+
+    console.log('Getting '+ currencydata.currency_to + ' rates...');
+
     const marketManager = this.MarketsManager;
 
-    // // Check currency
-    // if (!this.oracles[currencydata.currency_to]) {
-    //   console.log('Wrong currency: ' + currencydata.currency);
-    // }
-    // // Check address
-    // const address = this.oracles[currencydata.currency_to]._address;
-    // if (!address) {
-    //   console.log('Wrong address: ' + address);
-    // }
+    // Check currency
+    if (!this.oracles[currencydata.currency_to]) {
+      console.log('Wrong currency: ' + currencydata.currency);
+    }
+    // Check address
+    const address = this.oracles[currencydata.currency_to]._address;
+    if (!address) {
+      console.log('Wrong address: ' + address);
+    }
 
     let rates = [];
 
@@ -91,6 +94,8 @@ module.exports = class Provider {
 
     const medianRate = await this.getMedian(rates);
 
+    console.log('Median Rate '+ currencydata.currency_to + ': ' + medianRate); 
+
     this.ratesProvided.push({
       currency_from: currencydata.currency_from,
       currency_to: currencydata.currency_to,
@@ -99,7 +104,7 @@ module.exports = class Provider {
     });
 
     const providedData = {
-      oracle: '0x13647913',
+      oracle: address,
       rate: medianRate
     };
 
@@ -158,35 +163,36 @@ module.exports = class Provider {
         rate: medianRate
       };
 
+    } else {
+      // Not matching currency found 
+      // RCN -> from_currency
+
+      await this.getMedianFromMarketsIndirect(data, currencydata); 
+
+
     }
     return providedData;
   }
 
-
-
+  async getDirectMedianRates(directPairs) {
+    let providedData;  
+    
+    for (var pair of directPairs) {
+      providedData = await this.getMedianFromMarkets(pair);
+      this.medianRates.push(providedData);
+    }
+  }
 
 
   async getMarketsRates(data) {
 
     console.log('Gathering Market data...');
-    let providedData;
-    for (var currencydata of data) {
 
-      switch (currencydata.type) {
-      case 'direct':
-        providedData = await this.getMedianFromMarkets(currencydata);
-        break;
-      case 'indirect':
-        providedData = await this.getMedianFromMarketsIndirect(data, currencydata);
-        break;
-      case 'double-indirect':
-        providedData = await this.getMedianFromMarketsIndirect(currencydata);
-        break;
-      default:
-        break;
-      }
-      this.medianRates.push(providedData);
-    }
+    const directPairs = data.filter(pair => pair.type == 'direct');
+    const indirectPairs = data.filter(pair => pair.type == 'indirect');
+  
+    await this.getDirectMedianRates(directPairs);
+    // await this.getIndirectMedianRates(indirectPairs);
 
     return this.medianRates;
   }
@@ -207,10 +213,10 @@ module.exports = class Provider {
 
     const providedData = await this.getMarketsRates(signer.data);
     this.logMarketMedianRates();
-    console.log('provided Data', providedData);
+    // console.log('provided Data', providedData);
     const multipleProvideData = await this.getMultipleProvideData(providedData);
 
-    console.log(multipleProvideData);
+    // console.log(multipleProvideData);
 
     const gasPrice = await this.w3.eth.getGasPrice();
     // const gasEstimate = await this.oracleFactory.methods.provideMultiple(multipleProvideData).estimateGas(

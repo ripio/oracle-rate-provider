@@ -12,14 +12,13 @@ module.exports = class Binanace extends Market {
     const pair = await this.market.fetchTicker(currency_from + '/' + currency_to);
 
     let rate;
-    if (currency_to == 'USDT'){
+    if (currency_to == 'USD' || currency_to == 'ARS'){
       rate = this.toEquivalent(pair.info.lastPrice, 2);
       
     } else {
       rate = this.toEquivalent(pair.info.lastPrice, 18);
     }
 
-    console.log('rate', rate);
     return rate;
   }
 };

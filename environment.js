@@ -4,26 +4,26 @@ const signersData = [
   {
     currency_from: 'RCN',
     currency_to: 'ETH',
-    exchangesIds: ['binance'],
+    exchangesIds: ['binance', 'uniswap', 'huobipro', 'hitbtc'],
     type: 'direct' 
   },
   {
     currency_from: 'RCN',
     currency_to: 'BTC',
-    exchangesIds: ['binance'],
-    type: 'direct'
-  },
-  {
-    currency_from: 'BTC',
-    currency_to: 'USDT',
-    exchangesIds: ['binance'],
+    exchangesIds: ['binance', 'huobipro', 'bittrex', 'upbit', 'hitbtc'],
     type: 'direct'
   },
   {
     currency_from: 'RCN',
-    currency_to: 'USDT',
-    exchangesIds: [],
+    currency_to: 'USD',
+    exchangesIds: ['binance'],
     type: 'indirect'
+  },
+  {
+    currency_from: 'BTC',
+    currency_to: 'USD',
+    exchangesIds: ['bittrex', 'kraken', 'gemini'],
+    type: 'direct'
   }
 ];
 
