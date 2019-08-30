@@ -17,6 +17,5 @@ module.exports = {
   oracleFactory: ropstenContracts.oracleFactory,
   oracle: ropstenContracts.oracle,
   signersData: signersData,
-  markets: ropstenContracts.markets,
-  wait: process.env.WAIT * 60 * 1000 
+  markets: ropstenContracts.markets
 };

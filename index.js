@@ -4,34 +4,32 @@ const Provider = require('./src/Provider.js');
 const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 const { sleep } = require('./src/utils.js');
 
-const env = require('./environment.js');
-
 async function main() {
-  await sleep(process.env.SLEEP_FIRST);
-
   program
     .option(
-      '-p, --listPks <pks>',
-      'An array of private keys',
-      pks => pks.split(',')
+      '-p, --PK <pk>',
+      'private keys'
     )
     .option(
-      '-f, --filePks <path>',
-      'The path of a file with an array of private keys',
+      '-f, --filePk <path>',
+      'The path of a file with the private key',
       path => require(path)
+    )
+    .option(
+      '-w, --wait <wait>',
+      'The time to wait for a new provide',
+      15
     );
 
   program.parse(process.argv);
 
-  if (!program.listPks) program.listPks = [];
-  if (!program.filePks) program.filePks = [];
-
-
-  const pks = process.env.PK;
+  const pk = program.PK ? program.PK : program.filePk ? program.filePk[0] : process.env.PK;
+  const wait = program.wait ? program.wait : process.env.WAIT;
+  const waitMs = wait * 60 * 1000;
 
   const oracleFactory = await instanceOracleFactory();
   const oracles = await instanceOracles(oracleFactory);
-  const signer = await instanceSigners(pks);
+  const signer = await instanceSigners(pk);
 
   const provider = await new Provider(w3, oracleFactory, oracles).init();
   Marmo.DefaultConf.ROPSTEN.asDefault();
@@ -39,8 +37,8 @@ async function main() {
   for (;;) {
     provider.provideRates(signer);
 
-    console.log('Wait: ' + env.wait + 'ms');
-    await sleep(env.wait);
+    console.log('Wait: ' + waitMs + 'ms');
+    await sleep(waitMs);
 
   }
 }
