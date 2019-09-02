@@ -37,7 +37,7 @@ module.exports = class MarketsManager {
   async getRate(data) {
     let rate;
     try {
-      rate = await this.markets[data.exchangeId].getRate(data.currency_from, data.currency_to);
+      rate = await this.markets[data.exchangeId].getRate(data.currency_from, data.currency_to, data.decimals);
     } catch(e) {
       console.log('Error message: ' + e.message);
     }

@@ -8,22 +8,26 @@ const signersData = [
   {
     currency_from: 'RCN',
     currency_to: 'ETH',
-    exchangesIds: ['binance', 'uniswap', 'huobipro', 'hitbtc']
+    exchangesIds: ['binance', 'uniswap', 'huobipro', 'hitbtc'],
+    decimals: 18
   },
   {
     currency_from: 'RCN',
     currency_to: 'BTC',
-    exchangesIds: ['binance', 'huobipro', 'bittrex', 'upbit', 'hitbtc']
+    exchangesIds: ['binance', 'huobipro', 'bittrex', 'upbit', 'hitbtc'],
+    decimals: 18
   },
   {
     currency_from: 'BTC',
     currency_to: 'USD',
-    exchangesIds: ['bittrex', 'kraken', 'gemini']
+    exchangesIds: ['bittrex', 'kraken', 'gemini'],
+    decimals: 2
   },
   {
     currency_from: 'USD',
     currency_to: 'ARS',
-    exchangesIds: ['reuters']
+    exchangesIds: ['reuters'],
+    decimals: 2
   }
 ];
 

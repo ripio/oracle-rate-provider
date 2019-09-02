@@ -8,7 +8,7 @@ module.exports = class Reuters extends Market {
     super(w3);
   }
 
-  async getRate(currency_from, currency_to) {
+  async getRate(currency_from, currency_to, decimals) {
 
     const BASE_URL = env.reutersUrl;
     const queryCurrencies = 'jsonCurrencyConverter?' + 'srcCurr=' + currency_from + '&destCurr=' + currency_to;
@@ -19,7 +19,7 @@ module.exports = class Reuters extends Market {
 
       const pair = res.data;
 
-      const rate = this.toEquivalent(pair.src2Dest, 2);
+      const rate = this.toEquivalent(pair.src2Dest, decimals);
 
       return rate;
     } catch (e) {

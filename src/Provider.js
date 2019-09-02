@@ -30,8 +30,9 @@ module.exports = class Provider {
   }
 
   logRatesToProvide() {
+    console.log('\n');
     for (var provideRate of this.ratesToProvide) {
-      const log = '\n' + 'Providing Median Rate ' + this.primaryCurrency + '/' + provideRate.symbol + ': ' + provideRate.rate + '\n';
+      const log = 'Providing Median Rate for ' + this.primaryCurrency + '/' + provideRate.symbol + ': ' + provideRate.rate;
       console.log(log);
     }
   }
@@ -80,7 +81,8 @@ module.exports = class Provider {
       const rateData = {
         currency_from: currencydata.currency_from,
         currency_to: currencydata.currency_to,
-        exchangeId: exchange
+        exchangeId: exchange,
+        decimals: currencydata.decimals
       };
 
       const rate = await marketManager.getRate(rateData);
@@ -98,7 +100,8 @@ module.exports = class Provider {
       currency_from: currencydata.currency_from,
       currency_to: currencydata.currency_to,
       rate: medianRate,
-      markets: currencydata.exchangesIds
+      markets: currencydata.exchangesIds,
+      decimals: currencydata.decimals
     };
 
     this.ratesProvided.push(rateProvided);
@@ -164,7 +167,7 @@ module.exports = class Provider {
       const ratePrimary = await this.getPair(this.primaryCurrency, matchSymbol);
       const rateSymbol = await this.getPair(matchSymbol, symbol);
 
-      const medianRate = this.bn(ratePrimary.rate).mul(this.bn(rateSymbol.rate)).toString();
+      const medianRate = this.bn(ratePrimary.rate).mul(this.bn(rateSymbol.rate)).div(this.bn(10 ** rateSymbol.decimals)).toString();
       return medianRate;
     } else {
       for (var cp of pairsToPrimary) {
@@ -176,7 +179,8 @@ module.exports = class Provider {
             const intermidateRate = pair.rate;
 
             const medianRate = this.bn(primaryRate.rate).mul(this.bn(symbolRate.rate)).mul(this.bn(intermidateRate)).toString();
-            return medianRate;
+            const medianRateDecimals = this.bn(medianRate).div(this.bn(10 ** symbolRate.decimals)).div(this.bn(10 ** pair.decimals));
+            return medianRateDecimals;
           }
         }
       }
@@ -241,7 +245,8 @@ module.exports = class Provider {
     const oraclesRatesData = await this.getOraclesRatesData();
     this.logRatesToProvide();
 
-    console.log('Data provided for transaction', oraclesRatesData);
+
+    // console.log('Data provided for transaction', oraclesRatesData);
 
     const gasPrice = await this.w3.eth.getGasPrice();
     const gasEstimate = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).estimateGas(

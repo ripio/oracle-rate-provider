@@ -8,16 +8,11 @@ module.exports = class HitBTC extends Market {
     this.market  = new ccxt[exchangeId];
   }
 
-  async getRate(currency_from, currency_to) {
+  async getRate(currency_from, currency_to, decimals) {
     const pair = await this.market.fetchTicker(currency_from + '/' + currency_to);
 
-    let rate;
-    if (currency_to == 'USD' || currency_to == 'ARS'){
-      rate = this.toEquivalent(pair.info.last, 2);
-      
-    } else {
-      rate = this.toEquivalent(pair.info.last, 18);
-    }
+    const rate = this.toEquivalent(pair.info.last, decimals);
+
     return rate;
   }
 
