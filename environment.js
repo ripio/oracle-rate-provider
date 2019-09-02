@@ -1,29 +1,29 @@
 const ropstenContracts = require('./ropstenContracts.js');
 
+const oracleCurrency = 'RCN';
+const oracles = ['ETH', 'BTC', 'USD', 'ARS'];
+const reutersUrl = 'https://www.reuters.com/assets/';
+
 const signersData = [
   {
     currency_from: 'RCN',
     currency_to: 'ETH',
-    exchangesIds: ['binance', 'uniswap', 'huobipro', 'hitbtc'],
-    type: 'direct' 
+    exchangesIds: ['binance', 'uniswap', 'huobipro', 'hitbtc']
   },
   {
     currency_from: 'RCN',
     currency_to: 'BTC',
-    exchangesIds: ['binance', 'huobipro', 'bittrex', 'upbit', 'hitbtc'],
-    type: 'direct'
-  },
-  {
-    currency_from: 'RCN',
-    currency_to: 'USD',
-    exchangesIds: ['binance'],
-    type: 'indirect'
+    exchangesIds: ['binance', 'huobipro', 'bittrex', 'upbit', 'hitbtc']
   },
   {
     currency_from: 'BTC',
     currency_to: 'USD',
-    exchangesIds: ['bittrex', 'kraken', 'gemini'],
-    type: 'direct'
+    exchangesIds: ['bittrex', 'kraken', 'gemini']
+  },
+  {
+    currency_from: 'USD',
+    currency_to: 'ARS',
+    exchangesIds: ['reuters']
   }
 ];
 
@@ -33,5 +33,8 @@ module.exports = {
   oracleFactory: ropstenContracts.oracleFactory,
   oracle: ropstenContracts.oracle,
   signersData: signersData,
-  markets: ropstenContracts.markets
+  markets: ropstenContracts.markets,
+  oracleCurrency: oracleCurrency,
+  oracles: oracles,
+  reutersUrl: reutersUrl
 };
