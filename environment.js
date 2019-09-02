@@ -1,6 +1,6 @@
 const ropstenContracts = require('./ropstenContracts.js');
 
-const oracleCurrency = 'RCN';
+const primaryCurrency = 'RCN';
 const oracles = ['ETH', 'BTC', 'USD', 'ARS'];
 const reutersUrl = 'https://www.reuters.com/assets/';
 
@@ -34,7 +34,7 @@ module.exports = {
   oracle: ropstenContracts.oracle,
   signersData: signersData,
   markets: ropstenContracts.markets,
-  oracleCurrency: oracleCurrency,
+  primaryCurrency: primaryCurrency,
   oracles: oracles,
   reutersUrl: reutersUrl
 };

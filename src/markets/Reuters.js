@@ -15,17 +15,11 @@ module.exports = class Reuters extends Market {
 
     try {
 
-      console.log('endpoint', `${BASE_URL}${queryCurrencies}` );      
-
       const res = await axios.get(`${BASE_URL}${queryCurrencies}`);
-
-      console.log(res.data);
 
       const pair = res.data;
 
       const rate = this.toEquivalent(pair.src2Dest, 2);
-
-      console.log('rate:', rate);
 
       return rate;
     } catch (e) {
