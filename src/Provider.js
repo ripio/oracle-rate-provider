@@ -239,6 +239,7 @@ module.exports = class Provider {
 
   async provideRates(signer) {
     this.ratesProvided = [];
+    this.ratesToProvide = [];
 
     await this.getMarketsRates(signer.data);
     this.logMarketMedianRates();
