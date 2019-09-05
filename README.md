@@ -40,3 +40,25 @@ Create a .env file with key-value pairs as follow:
 $docker-compose up 
 
 ```
+
+## Run project using keystore-file for private key
+You need to have geth (go-ethereum) previously installed to import account from private key and generate keystore-file.
+
+Steps:
+* Create a file with the private key in hex such as 0x126740... 
+* Use the geth console to import account and set passphrase: 
+```
+$ geth account import ./key.prv
+```
+* This will create a keystore file with the privateKey encrypted in the Ethereum data directory (default: ~/.ethereum/keystore)
+
+Next, to run this project, install it locally using npm:
+Set the following arguments:
+
+* -a <address>  'address of private key to decrypt keystoreFile'
+* -k <key> ' key passphrase to decrypt keystoreFile' 
+
+```
+$ npm install
+$ node index.js -a <address> -k <key> 
+```
