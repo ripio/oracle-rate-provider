@@ -1,0 +1,8 @@
+version: '3'
+services:
+  provider:
+    build: .
+    image: provider 
+    environment:  
+      - WAIT=${WAIT_TIME}
+      - PK=${PRIVATE_KEY}
