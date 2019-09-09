@@ -147,6 +147,9 @@ module.exports = class Provider {
       if (mkr.currency_from == from && mkr.currency_to == to) {
         return mkr;
       }
+      if (mkr.currency_from == to && mkr.currency_to == from) {
+        return mkr;
+      }
     }
     return {};
   }
@@ -159,15 +162,27 @@ module.exports = class Provider {
   async getIndirectRate(symbol) {
     const pairsToPrimary = await this.getPairsTo(this.primaryCurrency);
     const pairsFromSymbol = await this.getPairsFrom(symbol);
+    const pairsToSymbol = await this.getPairsTo(symbol);
+    let matchPairTo = false;
 
-    const getIntersection = await this.getIntersection(pairsToPrimary, pairsFromSymbol);
+    let getIntersection = await this.getIntersection(pairsToPrimary, pairsFromSymbol);
+
+    if (getIntersection.length == 0){
+      getIntersection = await this.getIntersection(pairsToPrimary, pairsToSymbol);     
+      matchPairTo = true;
+    }
 
     if (getIntersection.length > 0) {
       const matchSymbol = getIntersection[0];
       const ratePrimary = await this.getPair(this.primaryCurrency, matchSymbol);
       const rateSymbol = await this.getPair(matchSymbol, symbol);
+      let medianRate;
 
-      const medianRate = this.bn(ratePrimary.rate).mul(this.bn(rateSymbol.rate)).div(this.bn(10 ** rateSymbol.decimals)).toString();
+      if (!matchPairTo) {
+        medianRate = this.bn(rateSymbol.rate).mul(this.bn(ratePrimary.rate)).div(this.bn(10 ** rateSymbol.decimals)).toString();
+      } else {
+        medianRate = this.bn(rateSymbol.rate).mul(this.bn(10 ** rateSymbol.decimals)).div(this.bn(ratePrimary.rate)).toString();
+      } 
       return medianRate;
     } else {
       for (var cp of pairsToPrimary) {
@@ -186,7 +201,7 @@ module.exports = class Provider {
       }
     }
 
-    const err = 'Cannot get median Rate: '+ this.primaryCurrency + '/' + symbol;
+    const err = '';
     return err;
   }
 
@@ -219,8 +234,12 @@ module.exports = class Provider {
         // Get indirect rate
         medianRate = await this.getIndirectRate(symbol);
 
-        const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
-        ratesProvidedData.push(rateProvided);
+        if (medianRate !== ''){
+          const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
+          ratesProvidedData.push(rateProvided);
+        } else {
+          console.log('Cannot get median Rate: '+ this.primaryCurrency + '/' + symbol);
+        }
 
       }
 
@@ -248,8 +267,6 @@ module.exports = class Provider {
     this.logRatesToProvide();
 
 
-    // console.log('Data provided for transaction', oraclesRatesData);
-
     const gasPrice = await this.w3.eth.getGasPrice();
     const gasEstimate = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).estimateGas(
       { from: signer.address }
@@ -260,17 +277,17 @@ module.exports = class Provider {
 
     console.log('Starting send transaction with marmo...');
 
-    try {
-      const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
-        { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-      );
+    // try {
+    //   const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
+    //     { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+    //   );
 
-      this.logRates(this.ratesToProvide, signer);
+    //   this.logRates(this.ratesToProvide, signer);
 
-      console.log('txHash: ' + tx.transactionHash);
-    } catch (e) {
-      console.log(' Error message: ' + e.message);
-    }
+    //   console.log('txHash: ' + tx.transactionHash);
+    // } catch (e) {
+    //   console.log(' Error message: ' + e.message);
+    // }
   }
 };
 
