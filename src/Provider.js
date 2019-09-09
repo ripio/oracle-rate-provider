@@ -277,17 +277,17 @@ module.exports = class Provider {
 
     console.log('Starting send transaction with marmo...');
 
-    // try {
-    //   const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
-    //     { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-    //   );
+    try {
+      const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
+        { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+      );
 
-    //   this.logRates(this.ratesToProvide, signer);
+      this.logRates(this.ratesToProvide, signer);
 
-    //   console.log('txHash: ' + tx.transactionHash);
-    // } catch (e) {
-    //   console.log(' Error message: ' + e.message);
-    // }
+      console.log('txHash: ' + tx.transactionHash);
+    } catch (e) {
+      console.log(' Error message: ' + e.message);
+    }
   }
 };
 
