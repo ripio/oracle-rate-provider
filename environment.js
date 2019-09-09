@@ -1,7 +1,7 @@
 const ropstenContracts = require('./ropstenContracts.js');
 
 const primaryCurrency = 'RCN';
-const oracles = ['ETH', 'BTC', 'USD', 'ARS'];
+const oracles = ['ETH', 'BTC', 'USD', 'ARS','DAI','MANA'];
 const reutersUrl = 'https://www.reuters.com/assets/';
 
 const signersData = [
@@ -28,6 +28,18 @@ const signersData = [
     currency_to: 'ARS',
     exchangesIds: ['reuters'],
     decimals: 2
+  },
+  {
+    currency_from: 'BTC',
+    currency_to: 'DAI',
+    exchangesIds: ['hitbtc'],
+    decimals: 2
+  },
+  {
+    currency_from: 'MANA',
+    currency_to: 'BTC',
+    exchangesIds: ['binance'],
+    decimals: 18
   }
 ];
 
