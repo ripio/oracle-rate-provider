@@ -179,9 +179,9 @@ module.exports = class Provider {
       let medianRate;
 
       if (!matchPairTo) {
-        medianRate = this.bn(rateSymbol.rate).mul(this.bn(ratePrimary.rate)).div(this.bn(10 ** rateSymbol.decimals)).toString();
+        medianRate = this.bn(ratePrimary.rate).mul(this.bn(rateSymbol.rate)).div(this.bn(10 ** rateSymbol.decimals)).toString();
       } else {
-        medianRate = this.bn(rateSymbol.rate).mul(this.bn(10 ** rateSymbol.decimals)).div(this.bn(ratePrimary.rate)).toString();
+        medianRate = this.bn(ratePrimary.rate).mul(this.bn(10 ** rateSymbol.decimals)).div(this.bn(rateSymbol.rate)).toString();
       } 
       return medianRate;
     } else {
