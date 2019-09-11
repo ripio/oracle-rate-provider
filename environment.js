@@ -38,7 +38,7 @@ const signersData = [
   {
     currency_from: 'MANA',
     currency_to: 'BTC',
-    exchangesIds: ['binance'],
+    exchangesIds: ['binance', 'huobipro', 'upbit'],
     decimals: 18
   }
 ];
