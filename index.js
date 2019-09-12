@@ -27,7 +27,12 @@ async function main() {
     .option(
       '-w, --wait <wait>',
       'The time to wait for a new provide',
-      15
+      360
+    )
+    .option(
+      '-m, --waitMarket <waitMarket>',
+      'The time to wait to gather market data',
+      3
     )
     .option(
       '-k, --key <key>',
@@ -48,6 +53,11 @@ async function main() {
   const wait = program.wait ? program.wait : process.env.WAIT;
   const waitMs = wait * 60 * 1000;
 
+  const waitMarket = program.waitMarket ? program.waitMarket : process.env.WAIT_MARKET;
+
+  console.log('WAIT_NEXT_PROVIDE_ALL:', wait + 'm');
+  console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm');  
+
   const oracleFactory = await instanceOracleFactory();
   const oracles = await instanceOracles(oracleFactory);
   const signer = await instanceSigners(pk);
@@ -61,22 +71,24 @@ async function main() {
   });
 
   // To do env variable waitMarketData
-  const waitMarketData = 0.5 * 60 * 1000;
+  const waitMarketData = waitMarket * 60 * 1000;
 
   for (;;) {
     console.log('PROVIDE ALL');
     await provider.provideRates(signer, true);
 
-    console.log('Wait for next provide All: ' + waitMs + 'ms'  + '\n');
+    console.log('Wait for next provide All: ' +  wait + 'ms'  + '\n');
     await sleep(waitMarketData);
     
     let t = 0;
     while (t < waitMs) {
-      console.log('PROVIDE ONLY RATE CHANGE > 1%');
+      console.log('\n' + 'PROVIDE ONLY RATE CHANGE > 1%');
       await provider.provideRates(signer, false);
-      t += waitMarketData; 
-      console.log('Wait market data');
+      
+      console.log('Wait ' + waitMarket + 'm and gather market data again');
       await sleep(waitMarketData);
+
+      t += waitMarketData; 
     }
 
   }
