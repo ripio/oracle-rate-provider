@@ -326,12 +326,14 @@ module.exports = class Provider {
 
         this.logRates(this.ratesToProvide, signer);
 
+        await this.persistRates(this.ratesToProvide);
+        
         console.log('txHash: ' + tx.transactionHash);
       } catch (e) {
         console.log(' Error message: ' + e.message);
       }
 
-      await this.persistRates(this.ratesToProvide);
+
 
     } else {
       console.log('No rates changed > 1 %');
