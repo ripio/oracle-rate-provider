@@ -225,22 +225,24 @@ module.exports = class Provider {
       }
 
       const directRate = await this.getPair(this.primaryCurrency, symbol);
+      let percentageChanged;
 
       if (directRate.rate != undefined) {
         // Get direct rate
         medianRate = directRate.rate;
+        percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
 
-        if (this.provideAll || await this.checkPercentageChanged(symbol, medianRate) == true) {
+        if (this.provideAll || percentageChanged) {
           const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
           ratesProvidedData.push(rateProvided);
         }
       } else {
         // Get indirect rate
         medianRate = await this.getIndirectRate(symbol);
+        percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
 
         if (medianRate !== '') {
-
-          if (this.provideAll || await this.checkPercentageChanged(symbol, medianRate) == true) {
+          if (this.provideAll || percentageChanged) {
             const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
             ratesProvidedData.push(rateProvided);
           }
@@ -250,15 +252,16 @@ module.exports = class Provider {
 
       }
 
-      const symbolMedianRate = {
-        symbol: symbol,
-        oracle: address,
-        rate: medianRate
-      };
+      if (this.provideAll || percentageChanged) {
+        const symbolMedianRate = {
+          symbol: symbol,
+          oracle: address,
+          rate: medianRate
+        };
 
-      this.ratesToProvide.push(symbolMedianRate);
+        this.ratesToProvide.push(symbolMedianRate);
+      }
     }
-
     return ratesProvidedData;
   }
 
@@ -266,7 +269,6 @@ module.exports = class Provider {
   async persistRates(ratesToProvide) {
     for (var currency of ratesToProvide) {
       await storage.setItem(currency.symbol, currency.rate);
-      console.log(await storage.getItem(currency.symbol));
     }
   }
 
@@ -293,7 +295,6 @@ module.exports = class Provider {
     console.log(abruptRateChanged);
     return abruptRateChanged;
   }
-
 
 
   async provideRates(signer, provideAll) {
@@ -329,6 +330,9 @@ module.exports = class Provider {
       } catch (e) {
         console.log(' Error message: ' + e.message);
       }
+
+      await this.persistRates(this.ratesToProvide);
+
     } else {
       console.log('No rates changed > 1 %');
     }

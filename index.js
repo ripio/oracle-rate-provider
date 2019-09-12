@@ -61,13 +61,13 @@ async function main() {
   });
 
   // To do env variable waitMarketData
-  const waitMarketData = 2 * 60 * 1000;
+  const waitMarketData = 0.5 * 60 * 1000;
 
   for (;;) {
     console.log('PROVIDE ALL');
     await provider.provideRates(signer, true);
 
-    console.log('Wait for next provide All: ' + waitMs + 'ms');
+    console.log('Wait for next provide All: ' + waitMs + 'ms'  + '\n');
     await sleep(waitMarketData);
     
     let t = 0;
