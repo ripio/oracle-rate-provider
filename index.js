@@ -50,10 +50,10 @@ async function main() {
   const pk = program.PK ? program.PK : program.filePk ?
     program.filePk[0] : process.env.PK ? process.env.PK : await pkFromKeyStore(program.address, program.key);
 
-  const wait = program.wait ? program.wait : process.env.WAIT;
+  const wait = process.env.WAIT  ? process.env.WAIT  : program.wait;
   const waitMs = wait * 60 * 1000;
 
-  const waitMarket = program.waitMarket ? program.waitMarket : process.env.WAIT_MARKET;
+  const waitMarket = process.env.WAIT_MARKET  ? process.env.WAIT_MARKET : program.waitMarket;
 
   console.log('WAIT_NEXT_PROVIDE_ALL:', wait + 'm');
   console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm');  
