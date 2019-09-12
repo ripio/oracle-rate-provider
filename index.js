@@ -3,7 +3,7 @@ const Marmo = require('marmojs');
 const Provider = require('./src/Provider.js');
 const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 const { sleep, importFromFile } = require('./src/utils.js');
-
+const storage = require('node-persist');
 
 async function pkFromKeyStore(address, key) {
   var keyObject = importFromFile(address);
@@ -54,6 +54,12 @@ async function main() {
 
   const provider = await new Provider(w3, oracleFactory, oracles).init();
   Marmo.DefaultConf.ROPSTEN.asDefault();
+
+  // Initialize persitent storage
+  await storage.init({
+    dir: './src/persistRates'
+  });
+
 
   for (;;) {
     await provider.provideRates(signer);

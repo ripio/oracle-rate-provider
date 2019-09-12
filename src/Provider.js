@@ -1,5 +1,6 @@
 const MarketsManager = require('./MarketsManager.js');
 const env = require('../environment.js');
+const storage = require('node-persist');
 
 module.exports = class Provider {
   constructor(w3, oracleFactory, oracles) {
@@ -167,8 +168,8 @@ module.exports = class Provider {
 
     let getIntersection = await this.getIntersection(pairsToPrimary, pairsFromSymbol);
 
-    if (getIntersection.length == 0){
-      getIntersection = await this.getIntersection(pairsToPrimary, pairsToSymbol);     
+    if (getIntersection.length == 0) {
+      getIntersection = await this.getIntersection(pairsToPrimary, pairsToSymbol);
       matchPairTo = true;
     }
 
@@ -182,12 +183,12 @@ module.exports = class Provider {
         medianRate = this.bn(ratePrimary.rate).mul(this.bn(rateSymbol.rate)).div(this.bn(10 ** rateSymbol.decimals)).toString();
       } else {
         medianRate = this.bn(ratePrimary.rate).mul(this.bn(10 ** rateSymbol.decimals)).div(this.bn(rateSymbol.rate)).toString();
-      } 
+      }
       return medianRate;
     } else {
       for (var cp of pairsToPrimary) {
         for (var cs of pairsFromSymbol) {
-          const pair = await this.getPair(cp,cs);
+          const pair = await this.getPair(cp, cs);
           if (pair.rate != undefined) {
             const primaryRate = await this.getPair(this.primaryCurrency, cp);
             const symbolRate = await this.getPair(cs, symbol);
@@ -234,11 +235,11 @@ module.exports = class Provider {
         // Get indirect rate
         medianRate = await this.getIndirectRate(symbol);
 
-        if (medianRate !== ''){
+        if (medianRate !== '') {
           const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
           ratesProvidedData.push(rateProvided);
         } else {
-          console.log('Cannot get median Rate: '+ this.primaryCurrency + '/' + symbol);
+          console.log('Cannot get median Rate: ' + this.primaryCurrency + '/' + symbol);
         }
 
       }
@@ -249,10 +250,18 @@ module.exports = class Provider {
         rate: medianRate
       };
 
-      this.ratesToProvide.push(symbolMedianRate);  
+      this.ratesToProvide.push(symbolMedianRate);
     }
 
     return ratesProvidedData;
+  }
+
+
+  async persistRates(ratesToProvide) {
+    for (var currency of ratesToProvide) {
+      await storage.setItem(currency.symbol, currency.rate);
+      console.log(await storage.getItem(currency.symbol));
+    }
   }
 
 
@@ -266,6 +275,9 @@ module.exports = class Provider {
     const oraclesRatesData = await this.getOraclesRatesData();
     this.logRatesToProvide();
 
+    console.log('Rates provided', this.ratesToProvide);
+    await this.persistRates(this.ratesToProvide);
+
 
     const gasPrice = await this.w3.eth.getGasPrice();
     const gasEstimate = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).estimateGas(
@@ -277,17 +289,17 @@ module.exports = class Provider {
 
     console.log('Starting send transaction with marmo...');
 
-    try {
-      const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
-        { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-      );
+    // try {
+    //   const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
+    //     { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+    //   );
 
-      this.logRates(this.ratesToProvide, signer);
+    //   this.logRates(this.ratesToProvide, signer);
 
-      console.log('txHash: ' + tx.transactionHash);
-    } catch (e) {
-      console.log(' Error message: ' + e.message);
-    }
+    //   console.log('txHash: ' + tx.transactionHash);
+    // } catch (e) {
+    //   console.log(' Error message: ' + e.message);
+    // }
   }
 };
 
