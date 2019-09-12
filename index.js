@@ -60,12 +60,24 @@ async function main() {
     dir: './src/persistRates'
   });
 
+  // To do env variable waitMarketData
+  const waitMarketData = 2 * 60 * 1000;
 
   for (;;) {
-    await provider.provideRates(signer);
+    console.log('PROVIDE ALL');
+    await provider.provideRates(signer, true);
 
-    console.log('Wait: ' + waitMs + 'ms');
-    await sleep(waitMs);
+    console.log('Wait for next provide All: ' + waitMs + 'ms');
+    await sleep(waitMarketData);
+    
+    let t = 0;
+    while (t < waitMs) {
+      console.log('PROVIDE ONLY RATE CHANGE > 1%');
+      await provider.provideRates(signer, false);
+      t += waitMarketData; 
+      console.log('Wait market data');
+      await sleep(waitMarketData);
+    }
 
   }
 }

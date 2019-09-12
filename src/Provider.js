@@ -12,6 +12,7 @@ module.exports = class Provider {
     this.oracleSymbols = env.oracles;
     this.primaryCurrency = env.primaryCurrency;
     this.ratesToProvide = [];
+    this.provideAll = false;
   }
 
   bn(number) {
@@ -195,7 +196,7 @@ module.exports = class Provider {
             const intermidateRate = pair.rate;
 
             const medianRate = this.bn(primaryRate.rate).mul(this.bn(symbolRate.rate)).mul(this.bn(intermidateRate)).toString();
-            const medianRateDecimals = this.bn(medianRate).div(this.bn(10 ** symbolRate.decimals)).div(this.bn(10 ** pair.decimals));
+            const medianRateDecimals = this.bn(medianRate).div(this.bn(10 ** symbolRate.decimals)).div(this.bn(10 ** pair.decimals)).toString();
             return medianRateDecimals;
           }
         }
@@ -229,15 +230,20 @@ module.exports = class Provider {
         // Get direct rate
         medianRate = directRate.rate;
 
-        const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
-        ratesProvidedData.push(rateProvided);
+        if (this.provideAll || await this.checkPercentageChanged(symbol, medianRate) == true) {
+          const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
+          ratesProvidedData.push(rateProvided);
+        }
       } else {
         // Get indirect rate
         medianRate = await this.getIndirectRate(symbol);
 
         if (medianRate !== '') {
-          const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
-          ratesProvidedData.push(rateProvided);
+
+          if (this.provideAll || await this.checkPercentageChanged(symbol, medianRate) == true) {
+            const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
+            ratesProvidedData.push(rateProvided);
+          }
         } else {
           console.log('Cannot get median Rate: ' + this.primaryCurrency + '/' + symbol);
         }
@@ -264,10 +270,36 @@ module.exports = class Provider {
     }
   }
 
+  async checkPercentageChanged(symbol, newRate) {
+    let abruptRateChanged = false;
 
-  async provideRates(signer) {
+    const pr = await storage.getItem(symbol);
+    console.log('currency', symbol);
+
+    if (pr) {
+      let percentageChanged;
+      if (pr >= newRate) {
+        percentageChanged = (1 - (newRate / pr)) * 100;
+      } else {
+        percentageChanged = ((newRate / pr) - 1) * 100;
+      }
+      console.log('Percentage Changed', percentageChanged.toString());
+
+      if (percentageChanged > env.percentageChange) {
+        // Update rate, add to send in tx 
+        abruptRateChanged = true;
+      }
+    }
+    console.log(abruptRateChanged);
+    return abruptRateChanged;
+  }
+
+
+
+  async provideRates(signer, provideAll) {
     this.ratesProvided = [];
     this.ratesToProvide = [];
+    this.provideAll = provideAll;
 
     await this.getMarketsRates(signer.data);
     this.logMarketMedianRates();
@@ -275,31 +307,31 @@ module.exports = class Provider {
     const oraclesRatesData = await this.getOraclesRatesData();
     this.logRatesToProvide();
 
-    console.log('Rates provided', this.ratesToProvide);
-    await this.persistRates(this.ratesToProvide);
+    if (oraclesRatesData.length > 0) {
+      const gasPrice = await this.w3.eth.getGasPrice();
+      const gasEstimate = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).estimateGas(
+        { from: signer.address }
+      );
 
+      // 10% more than gas estimate 
+      const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
 
-    const gasPrice = await this.w3.eth.getGasPrice();
-    const gasEstimate = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).estimateGas(
-      { from: signer.address }
-    );
+      console.log('Starting send transaction with marmo...');
 
-    // 10% more than gas estimate 
-    const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
+      try {
+        const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
+          { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+        );
 
-    console.log('Starting send transaction with marmo...');
+        this.logRates(this.ratesToProvide, signer);
 
-    // try {
-    //   const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
-    //     { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-    //   );
-
-    //   this.logRates(this.ratesToProvide, signer);
-
-    //   console.log('txHash: ' + tx.transactionHash);
-    // } catch (e) {
-    //   console.log(' Error message: ' + e.message);
-    // }
+        console.log('txHash: ' + tx.transactionHash);
+      } catch (e) {
+        console.log(' Error message: ' + e.message);
+      }
+    } else {
+      console.log('No rates changed > 1 %');
+    }
   }
 };
 
