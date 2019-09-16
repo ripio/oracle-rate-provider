@@ -2,36 +2,20 @@ const W3 = require('web3');
 
 const env = require('../environment.js');
 
+const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
 
-module.exports.getw3 = () => {
-  const network = process.env.NETWORK;
-  console.log(network);
-  if (network == 'mainnet') {
-    // TO DO - CHANGE TO MAINNET 
-    return new W3(new W3.providers.HttpProvider(env.nodeRopsten));
-  }
-  if (network == 'ropsten') {
-    return new W3(new W3.providers.HttpProvider(env.nodeRopsten));
-  }
-};
 
-module.exports.w3 = this.getw3();
+module.exports.w3 = new W3(new W3.providers.HttpProvider(netEnv.node));
 
 
 module.exports.instanceOracleFactory = async () => {
-  const network = process.env.NETWORK;
-  if (network == 'mainnet') {
-    return new this.w3.eth.Contract(env.oracleFactory.abi, env.oracleFactory.address);
-  }
-  if (network == 'ropsten') {
-    return new this.w3.eth.Contract(env.oracleFactoryTest.abi, env.oracleFactoryTest.address);
-  }
+  return new this.w3.eth.Contract(netEnv.oracleFactory.abi, netEnv.oracleFactory.address);
 };
 
 module.exports.instanceOracles = async (oracleFactory) => {
   const oracles = [];
 
-  const symbols = process.env.NETWORK == 'mainnet' ? env.oracles : env.oraclesTest;
+  const symbols = netEnv.oracles;
 
   console.log('All oracles:');
   for (const symbol of symbols) {
@@ -56,7 +40,7 @@ module.exports.instanceSigners = async (pk) => {
   if (this.w3.utils.isHexStrict(pk)) {
     signer = this.w3.eth.accounts.privateKeyToAccount(pk);
     this.w3.eth.accounts.wallet.add(signer);
-    signer.data = process.env.NETWORK == 'mainnet' ? env.signersData : env.signersDataTest;
+    signer.data = netEnv.signersData;
   } else {
     console.log('The private key its not valid: ' + pk);
   }
