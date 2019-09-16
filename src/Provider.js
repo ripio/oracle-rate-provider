@@ -301,6 +301,9 @@ module.exports = class Provider {
     this.ratesProvided = [];
     this.ratesToProvide = [];
     this.provideAll = provideAll;
+    let provideOneOracle; 
+    let provideOneRate;
+    let gasEstimate;
 
     await this.getMarketsRates(signer.data);
     this.logMarketMedianRates();
@@ -310,9 +313,17 @@ module.exports = class Provider {
 
     if (oraclesRatesData.length > 0) {
       const gasPrice = await this.w3.eth.getGasPrice();
-      const gasEstimate = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).estimateGas(
-        { from: signer.address }
-      );
+      if (oraclesRatesData.length == 1) {
+        provideOneOracle = this.ratesToProvide[0].oracle;
+        provideOneRate = this.ratesToProvide[0].rate;
+        gasEstimate = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).estimateGas(
+          { from: signer.address }
+        );
+      } else {
+        gasEstimate = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).estimateGas(
+          { from: signer.address }
+        );
+      }
 
       // 10% more than gas estimate 
       const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
@@ -320,9 +331,16 @@ module.exports = class Provider {
       console.log('Starting send transaction with marmo...');
 
       try {
-        const tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
-          { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-        );
+        let tx;
+        if (oraclesRatesData.length == 1) {
+          tx = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).send(
+            { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+          );
+        } else {
+          tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
+            { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+          );
+        }
 
         this.logRates(this.ratesToProvide, signer);
 
