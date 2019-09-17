@@ -241,24 +241,10 @@ module.exports = class Provider {
         medianRate = directRate.rate;
         percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
 
-        if (this.provideAll || percentageChanged) {
-          const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
-          ratesProvidedData.push(rateProvided);
-        }
       } else {
         // Get indirect rate
         medianRate = await this.getIndirectRate(symbol);
         percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
-
-        if (medianRate !== '') {
-          if (this.provideAll || percentageChanged) {
-            const rateProvided = `${this.toUint96(Number(medianRate))}${address.replace('0x', '')}`;
-            ratesProvidedData.push(rateProvided);
-          }
-        } else {
-          console.log('Cannot get median Rate: ' + this.primaryCurrency + '/' + symbol);
-        }
-
       }
 
       if (this.provideAll || percentageChanged) {
@@ -271,7 +257,7 @@ module.exports = class Provider {
         this.ratesToProvide.push(symbolMedianRate);
       }
     }
-    return ratesProvidedData;
+    return this.ratesToProvide;
   }
 
 
@@ -313,6 +299,8 @@ module.exports = class Provider {
     let provideOneOracle;
     let provideOneRate;
     let gasEstimate;
+    let oracles = [];
+    let rates = [];
 
     await this.getMarketsRates(signer.data);
     this.logMarketMedianRates();
@@ -329,7 +317,11 @@ module.exports = class Provider {
           { from: signer.address }
         );
       } else {
-        gasEstimate = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).estimateGas(
+        for (var c of oraclesRatesData) {
+          oracles.push(c.oracle);
+          rates.push(c.rate);
+        }
+        gasEstimate = await this.oracleFactory.methods.provideMultiple(oracles,rates).estimateGas(
           { from: signer.address }
         );
       }
@@ -346,7 +338,7 @@ module.exports = class Provider {
             { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
           );
         } else {
-          tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
+          tx = await this.oracleFactory.methods.provideMultiple(oracles,rates).send(
             { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
           );
         }
