@@ -1,11 +1,10 @@
 const program = require('commander');
 const Marmo = require('marmojs');
 const Provider = require('./src/Provider.js');
-const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 const { sleep, importFromFile } = require('./src/utils.js');
 const storage = require('node-persist');
 
-async function pkFromKeyStore(address, key) {
+async function pkFromKeyStore(w3, address, key) {
   var keyObject = importFromFile(address);
 
   const decrypted = w3.eth.accounts.decrypt(keyObject, key);
@@ -42,13 +41,29 @@ async function main() {
     .option(
       '-a, --address <address>',
       'address of private key to decrypt keystoreFile',
-      ''
+      ''  
+    )
+    .option(
+      '-n, --network <network>',
+      'network',
+      'mainnet'
     );
 
   program.parse(process.argv);
 
+  // Initialize network
+  process.env.NETWORK = program.network;  
+  const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
+
   const pk = program.PK ? program.PK : program.filePk ?
-    program.filePk[0] : process.env.PK ? process.env.PK : await pkFromKeyStore(program.address, program.key);
+    program.filePk[0] : process.env.PK ? process.env.PK : await pkFromKeyStore(w3, program.address, program.key);
+
+  const oracleFactory = await instanceOracleFactory();
+  const oracles = await instanceOracles(oracleFactory);
+  const signer = await instanceSigners(pk);
+
+  const provider = await new Provider(w3, oracleFactory, oracles).init();
+  Marmo.DefaultConf.ROPSTEN.asDefault();
 
   const wait = process.env.WAIT  ? process.env.WAIT  : program.wait;
   const waitMs = wait * 60 * 1000;
@@ -58,19 +73,11 @@ async function main() {
   console.log('WAIT_NEXT_PROVIDE_ALL:', wait + 'm');
   console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm');  
 
-  const oracleFactory = await instanceOracleFactory();
-  const oracles = await instanceOracles(oracleFactory);
-  const signer = await instanceSigners(pk);
-
-  const provider = await new Provider(w3, oracleFactory, oracles).init();
-  Marmo.DefaultConf.ROPSTEN.asDefault();
-
   // Initialize persitent storage
   await storage.init({
     dir: './src/persistRates'
   });
 
-  // To do env variable waitMarketData
   const waitMarketData = waitMarket * 60 * 1000;
 
   for (;;) {
