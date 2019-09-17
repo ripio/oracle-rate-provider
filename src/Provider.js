@@ -2,10 +2,10 @@ const MarketsManager = require('./MarketsManager.js');
 const env = require('../environment.js');
 const storage = require('node-persist');
 
-const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
 
 module.exports = class Provider {
   constructor(w3, oracleFactory, oracles) {
+    const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
     this.w3 = w3;
     this.oracleFactory = oracleFactory;
     this.oracles = oracles;
@@ -217,6 +217,8 @@ module.exports = class Provider {
 
   async getOraclesRatesData() {
     let ratesProvidedData = [];
+
+    console.log('Oracle symbols', this.oracleSymbols);
 
     for (var symbol of this.oracleSymbols) {
       let medianRate;

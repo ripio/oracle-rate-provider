@@ -19,8 +19,6 @@ module.exports = class Uniswap extends Market {
   async init() {
     const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
     this.rcnExchange.address = await this.factory.methods.getExchange(netEnv.RCN).call();
-
-    console.log('RCN TEST EXCHANGE', this.rcnExchange.address);
     return this;
   }
 
