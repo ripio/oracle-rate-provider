@@ -269,7 +269,7 @@ module.exports = class Provider {
 
     const pair = this.netEnv.primaryCurrency + '/' + symbol;
     const pr = await storage.getItem(pair);
-    console.log('pair', pr);
+    console.log('pair', pair);
 
     if (pr) {
       let percentageChanged;
