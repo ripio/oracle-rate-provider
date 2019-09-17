@@ -1,11 +1,10 @@
 const program = require('commander');
 const Marmo = require('marmojs');
 const Provider = require('./src/Provider.js');
-const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 const { sleep, importFromFile } = require('./src/utils.js');
+const storage = require('node-persist');
 
-
-async function pkFromKeyStore(address, key) {
+async function pkFromKeyStore(w3, address, key) {
   var keyObject = importFromFile(address);
 
   const decrypted = w3.eth.accounts.decrypt(keyObject, key);
@@ -27,7 +26,12 @@ async function main() {
     .option(
       '-w, --wait <wait>',
       'The time to wait for a new provide',
-      15
+      360
+    )
+    .option(
+      '-m, --waitMarket <waitMarket>',
+      'The time to wait to gather market data',
+      3
     )
     .option(
       '-k, --key <key>',
@@ -37,16 +41,22 @@ async function main() {
     .option(
       '-a, --address <address>',
       'address of private key to decrypt keystoreFile',
-      ''
+      ''  
+    )
+    .option(
+      '-n, --network <network>',
+      'network',
+      'mainnet'
     );
 
   program.parse(process.argv);
 
-  const pk = program.PK ? program.PK : program.filePk ?
-    program.filePk[0] : process.env.PK ? process.env.PK : await pkFromKeyStore(program.address, program.key);
+  // Initialize network
+  process.env.NETWORK = program.network;  
+  const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 
-  const wait = program.wait ? program.wait : process.env.WAIT;
-  const waitMs = wait * 60 * 1000;
+  const pk = program.PK ? program.PK : program.filePk ?
+    program.filePk[0] : process.env.PK ? process.env.PK : await pkFromKeyStore(w3, program.address, program.key);
 
   const oracleFactory = await instanceOracleFactory();
   const oracles = await instanceOracles(oracleFactory);
@@ -55,11 +65,38 @@ async function main() {
   const provider = await new Provider(w3, oracleFactory, oracles).init();
   Marmo.DefaultConf.ROPSTEN.asDefault();
 
-  for (;;) {
-    await provider.provideRates(signer);
+  const wait = process.env.WAIT  ? process.env.WAIT  : program.wait;
+  const waitMs = wait * 60 * 1000;
 
-    console.log('Wait: ' + waitMs + 'ms');
-    await sleep(waitMs);
+  const waitMarket = process.env.WAIT_MARKET  ? process.env.WAIT_MARKET : program.waitMarket;
+
+  console.log('WAIT_NEXT_PROVIDE_ALL:', wait + 'm');
+  console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm');  
+
+  // Initialize persitent storage
+  await storage.init({
+    dir: './src/persistRates'
+  });
+
+  const waitMarketData = waitMarket * 60 * 1000;
+
+  for (;;) {
+    console.log('PROVIDE ALL');
+    await provider.provideRates(signer, true);
+
+    console.log('Wait for next provide All: ' +  wait + 'ms'  + '\n');
+    await sleep(waitMarketData);
+    
+    let t = 0;
+    while (t < waitMs) {
+      console.log('\n' + 'PROVIDE ONLY RATE CHANGE > 1%');
+      await provider.provideRates(signer, false);
+      
+      console.log('Wait ' + waitMarket + 'm and gather market data again');
+      await sleep(waitMarketData);
+
+      t += waitMarketData; 
+    }
 
   }
 }
