@@ -11,8 +11,6 @@ module.exports = class Provider {
     this.oracles = oracles;
     this.MarketsManager = null;
     this.ratesProvided = [];
-    this.oracleSymbols = this.netEnv.oracles;
-    this.primaryCurrency = this.netEnv.primaryCurrency;
     this.ratesToProvide = [];
     this.provideAll = false;
   }
@@ -36,7 +34,7 @@ module.exports = class Provider {
   logRatesToProvide() {
     console.log('\n');
     for (var provideRate of this.ratesToProvide) {
-      const log = 'Providing Median Rate for ' + this.primaryCurrency + '/' + provideRate.symbol + ': ' + provideRate.rate;
+      const log = 'Providing Median Rate for ' + this.netEnv.primaryCurrency + '/' + provideRate.symbol + ': ' + provideRate.rate;
       console.log(log);
     }
   }
@@ -218,8 +216,6 @@ module.exports = class Provider {
   async getOraclesRatesData() {
     let ratesProvidedData = [];
 
-    console.log('Oracle symbols', this.oracleSymbols);
-
     for (var symbol of this.oracleSymbols) {
       let medianRate;
 
@@ -263,15 +259,17 @@ module.exports = class Provider {
 
   async persistRates(ratesToProvide) {
     for (var currency of ratesToProvide) {
-      await storage.setItem(currency.symbol, currency.rate);
+      const pair = this.netEnv.primaryCurrency + '/' + currency.symbol;
+      await storage.setItem(pair, currency.rate);
     }
   }
 
   async checkPercentageChanged(symbol, newRate) {
     let abruptRateChanged = false;
 
-    const pr = await storage.getItem(symbol);
-    console.log('currency', symbol);
+    const pair = this.netEnv.primaryCurrency + '/' + symbol;
+    const pr = await storage.getItem(pair);
+    console.log('pair', pr);
 
     if (pr) {
       let percentageChanged;
@@ -292,7 +290,9 @@ module.exports = class Provider {
   }
 
 
-  async provideRates(signer, provideAll) {
+  async provideRates(signer, pc, oraclesSymbols, provideAll) {
+    this.oracleSymbols = oraclesSymbols;
+    this.primaryCurrency = pc;
     this.ratesProvided = [];
     this.ratesToProvide = [];
     this.provideAll = provideAll;
