@@ -2,6 +2,8 @@ const MarketsManager = require('./MarketsManager.js');
 const env = require('../environment.js');
 const storage = require('node-persist');
 
+const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
+
 module.exports = class Provider {
   constructor(w3, oracleFactory, oracles) {
     this.w3 = w3;
@@ -9,8 +11,8 @@ module.exports = class Provider {
     this.oracles = oracles;
     this.MarketsManager = null;
     this.ratesProvided = [];
-    this.oracleSymbols = env.oracles;
-    this.primaryCurrency = env.primaryCurrency;
+    this.oracleSymbols = netEnv.oracles;
+    this.primaryCurrency = netEnv.primaryCurrency;
     this.ratesToProvide = [];
     this.provideAll = false;
   }
@@ -330,26 +332,26 @@ module.exports = class Provider {
 
       console.log('Starting send transaction with marmo...');
 
-      try {
-        let tx;
-        if (oraclesRatesData.length == 1) {
-          tx = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).send(
-            { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-          );
-        } else {
-          tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
-            { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-          );
-        }
+      // try {
+      //   let tx;
+      //   if (oraclesRatesData.length == 1) {
+      //     tx = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).send(
+      //       { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+      //     );
+      //   } else {
+      //     tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
+      //       { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+      //     );
+      //   }
 
-        this.logRates(this.ratesToProvide, signer);
+      //   this.logRates(this.ratesToProvide, signer);
 
-        await this.persistRates(this.ratesToProvide);
+      //   await this.persistRates(this.ratesToProvide);
 
-        console.log('txHash: ' + tx.transactionHash);
-      } catch (e) {
-        console.log(' Error message: ' + e.message);
-      }
+      //   console.log('txHash: ' + tx.transactionHash);
+      // } catch (e) {
+      //   console.log(' Error message: ' + e.message);
+      // }
 
     } else {
       console.log('No rates changed > 1 %');
