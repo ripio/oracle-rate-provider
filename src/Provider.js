@@ -55,14 +55,11 @@ module.exports = class Provider {
     var median = 0, rateLen = rates.length;
     rates.sort();
 
-    if (
-      rateLen % 2 === 0
-    ) {
+    if (rateLen % 2 === 0) {
       const num1 = this.bn(rates[this.bn(rateLen).div(this.bn(2)) - 1]);
       const num2 = this.bn(rates[this.bn(rateLen).div(this.bn(2))]);
 
       median = (num1.add(num2)).div(this.bn(2)).toString();
-
     } else {
       median = rates[(rateLen - 1) / 2];
     }
@@ -78,7 +75,7 @@ module.exports = class Provider {
 
     let rates = [];
 
-    // Get median from market rates 
+    // Get median from market rates
     for (var exchange of currencydata.exchangesIds) {
       const rateData = {
         currency_from: currencydata.currency_from,
@@ -288,7 +285,7 @@ module.exports = class Provider {
       console.log('Percentage Changed', percentageChanged.toString());
 
       if (percentageChanged > env.percentageChange) {
-        // Update rate, add to send in tx 
+        // Update rate, add to send in tx
         abruptRateChanged = true;
       }
     }
@@ -301,7 +298,7 @@ module.exports = class Provider {
     this.ratesProvided = [];
     this.ratesToProvide = [];
     this.provideAll = provideAll;
-    let provideOneOracle; 
+    let provideOneOracle;
     let provideOneRate;
     let gasEstimate;
 
@@ -325,7 +322,7 @@ module.exports = class Provider {
         );
       }
 
-      // 10% more than gas estimate 
+      // 10% more than gas estimate
       const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
 
       console.log('Starting send transaction with marmo...');
@@ -356,4 +353,3 @@ module.exports = class Provider {
     }
   }
 };
-
