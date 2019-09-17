@@ -53,6 +53,10 @@ module.exports = class Provider {
 
   async getMedian(rates) {
     var median = 0, rateLen = rates.length;
+
+    if (!rateLen)
+      return undefined;
+
     rates.sort();
 
     if (rateLen % 2 === 0) {
@@ -92,6 +96,10 @@ module.exports = class Provider {
       }
     }
     const medianRate = await this.getMedian(rates);
+    if (!medianRate) {
+      console.log('Dont have rates');
+      return;
+    }
 
     console.log('Median Rate ' + currencydata.currency_from + '/' + currencydata.currency_to + ': ' + medianRate + '\n');
 
