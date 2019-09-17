@@ -18,7 +18,7 @@ module.exports = class Binanace extends Market {
     return this;
   }
 
-  async getRate(currency) {
+  async getRate(currency_from, currency_to, decimals) {
     // TODO remove this when use in mainnet
     const W3 = require('web3');
     const w3 = new W3(new W3.providers.HttpProvider('https://mainnet.infura.io/v3/f6427a6723594cdd8affb596d357d268'));
@@ -26,7 +26,7 @@ module.exports = class Binanace extends Market {
     // TODO_END
 
     let rate;
-    if (currency === 'ETH') {
+    if (currency_to === 'ETH') {
       const amountInRCN = this.bn('1000');// TODO think this amount
       const amountInWEI = this.WEI.mul(amountInRCN);
 
