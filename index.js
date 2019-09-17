@@ -3,6 +3,7 @@ const Marmo = require('marmojs');
 const Provider = require('./src/Provider.js');
 const { sleep, importFromFile } = require('./src/utils.js');
 const storage = require('node-persist');
+const env = require('./environment.js');
 
 async function pkFromKeyStore(w3, address, key) {
   var keyObject = importFromFile(address);
@@ -10,6 +11,19 @@ async function pkFromKeyStore(w3, address, key) {
   const decrypted = w3.eth.accounts.decrypt(keyObject, key);
 
   return decrypted.privateKey;
+}
+
+async function provideTestRates(provider, signer, netEnv, provideAll) {
+
+  const notMatchOracles = env.ropsten.oracles.filter(c => !env.ropsten.oraclesFromMain.includes(c));
+
+  console.log('Get Test Rates');
+  await provider.provideRates(signer, env.ropsten.primaryCurrency, notMatchOracles, provideAll);
+  signer.data = env.main.signersData;
+
+  console.log('Get Main Rates');
+  await provider.provideRates(signer, env.main.primaryCurrency, netEnv.oraclesFromMain, provideAll);
+  signer.data = env.ropsten.signersData;
 }
 
 async function main() {
@@ -41,7 +55,7 @@ async function main() {
     .option(
       '-a, --address <address>',
       'address of private key to decrypt keystoreFile',
-      ''  
+      ''
     )
     .option(
       '-n, --network <network>',
@@ -52,7 +66,7 @@ async function main() {
   program.parse(process.argv);
 
   // Initialize network
-  process.env.NETWORK = program.network;  
+  process.env.NETWORK = program.network;
   const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 
   const pk = program.PK ? program.PK : program.filePk ?
@@ -60,18 +74,18 @@ async function main() {
 
   const oracleFactory = await instanceOracleFactory();
   const oracles = await instanceOracles(oracleFactory);
-  const signer = await instanceSigners(pk);
+  let signer = await instanceSigners(pk);
 
   const provider = await new Provider(w3, oracleFactory, oracles).init();
   Marmo.DefaultConf.ROPSTEN.asDefault();
 
-  const wait = process.env.WAIT  ? process.env.WAIT  : program.wait;
+  const wait = process.env.WAIT ? process.env.WAIT : program.wait;
   const waitMs = wait * 60 * 1000;
 
-  const waitMarket = process.env.WAIT_MARKET  ? process.env.WAIT_MARKET : program.waitMarket;
+  const waitMarket = process.env.WAIT_MARKET ? process.env.WAIT_MARKET : program.waitMarket;
 
   console.log('WAIT_NEXT_PROVIDE_ALL:', wait + 'm');
-  console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm');  
+  console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm');
 
   // Initialize persitent storage
   await storage.init({
@@ -79,23 +93,33 @@ async function main() {
   });
 
   const waitMarketData = waitMarket * 60 * 1000;
+  const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
 
-  for (;;) {
+  for (; ;) {
     console.log('PROVIDE ALL');
-    await provider.provideRates(signer, true);
 
-    console.log('Wait for next provide All: ' +  wait + 'ms'  + '\n');
+    if (process.env.NETWORK != 'mainnet') {
+      await provideTestRates(provider, signer, netEnv, true);
+    } else {
+      await provider.provideRates(signer, netEnv.primaryCurrency, netEnv.oracles, true);
+    }
+
+    console.log('Wait for next provide All: ' + wait + 'ms' + '\n');
     await sleep(waitMarketData);
-    
+
     let t = 0;
     while (t < waitMs) {
       console.log('\n' + 'PROVIDE ONLY RATE CHANGE > 1%');
-      await provider.provideRates(signer, false);
-      
+      if (process.env.NETWORK != 'mainnet') {
+        await provideTestRates(provider, signer, netEnv, false);
+      } else {
+        await provider.provideRates(signer, netEnv.primaryCurrency, netEnv.oracles, false);
+      }
+
       console.log('Wait ' + waitMarket + 'm and gather market data again');
       await sleep(waitMarketData);
 
-      t += waitMarketData; 
+      t += waitMarketData;
     }
 
   }
