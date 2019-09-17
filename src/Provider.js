@@ -5,14 +5,14 @@ const storage = require('node-persist');
 
 module.exports = class Provider {
   constructor(w3, oracleFactory, oracles) {
-    const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
+    this.netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
     this.w3 = w3;
     this.oracleFactory = oracleFactory;
     this.oracles = oracles;
     this.MarketsManager = null;
     this.ratesProvided = [];
-    this.oracleSymbols = netEnv.oracles;
-    this.primaryCurrency = netEnv.primaryCurrency;
+    this.oracleSymbols = this.netEnv.oracles;
+    this.primaryCurrency = this.netEnv.primaryCurrency;
     this.ratesToProvide = [];
     this.provideAll = false;
   }
@@ -296,7 +296,7 @@ module.exports = class Provider {
       }
       console.log('Percentage Changed', percentageChanged.toString());
 
-      if (percentageChanged > env.percentageChange) {
+      if (percentageChanged > this.netEnv.percentageChange) {
         // Update rate, add to send in tx
         abruptRateChanged = true;
       }
@@ -339,26 +339,26 @@ module.exports = class Provider {
 
       console.log('Starting send transaction with marmo...');
 
-      // try {
-      //   let tx;
-      //   if (oraclesRatesData.length == 1) {
-      //     tx = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).send(
-      //       { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-      //     );
-      //   } else {
-      //     tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
-      //       { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-      //     );
-      //   }
+      try {
+        let tx;
+        if (oraclesRatesData.length == 1) {
+          tx = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).send(
+            { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+          );
+        } else {
+          tx = await this.oracleFactory.methods.provideMultiple(oraclesRatesData).send(
+            { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
+          );
+        }
 
-      //   this.logRates(this.ratesToProvide, signer);
+        this.logRates(this.ratesToProvide, signer);
 
-      //   await this.persistRates(this.ratesToProvide);
+        await this.persistRates(this.ratesToProvide);
 
-      //   console.log('txHash: ' + tx.transactionHash);
-      // } catch (e) {
-      //   console.log(' Error message: ' + e.message);
-      // }
+        console.log('txHash: ' + tx.transactionHash);
+      } catch (e) {
+        console.log(' Error message: ' + e.message);
+      }
 
     } else {
       console.log('No rates changed > 1 %');
