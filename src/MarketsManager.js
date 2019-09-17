@@ -25,7 +25,7 @@ module.exports = class MarketsManager {
     this.markets['kraken'] = await new Kraken(this.w3, 'kraken');
     this.markets['gemini'] = await new Gemini(this.w3, 'gemini');
     this.markets['reuters'] = await new Reuters(this.w3);
-  
+
 
     return this;
   }

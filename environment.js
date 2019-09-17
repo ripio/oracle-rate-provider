@@ -1,8 +1,12 @@
 const ropstenContracts = require('./ropstenContracts.js');
+const mainnetContracts = require('./mainnetContracts.js');
 
 const primaryCurrency = 'RCN';
+const primaryCurrencyTest = 'TEST';
 const oracles = ['ETH', 'BTC', 'USD', 'ARS','DAI','MANA'];
+const oraclesTest = ['ETH'];
 const reutersUrl = 'https://www.reuters.com/assets/';
+const percentageChange = 1;
 
 const signersData = [
   {
@@ -43,14 +47,43 @@ const signersData = [
   }
 ];
 
-module.exports = {
+const signersDataTest = [
+  {
+    currency_from: 'TEST',
+    currency_to: 'ETH',
+    exchangesIds: ['uniswap'],
+    decimals: 18
+  },
+  {
+    currency_from: 'TEST',
+    currency_to: 'DEST',
+    exchangesIds: ['uniswap'],
+    decimals: 18
+  },
+];
+
+module.exports.main = {
+  node: mainnetContracts.nodes.infura,
+  RCN: mainnetContracts.RCNToken,
+  oracleFactory: mainnetContracts.oracleFactory,
+  oracle: mainnetContracts.oracle,
+  markets: ropstenContracts.markets,
+  primaryCurrency: primaryCurrency,
+  oracles: oracles,
+  signersData: signersData,
+  reutersUrl: reutersUrl,
+  percentageChange: percentageChange
+};
+
+module.exports.ropsten = {
   node: ropstenContracts.nodes.infura,
   RCN: ropstenContracts.RCNToken,
   oracleFactory: ropstenContracts.oracleFactory,
   oracle: ropstenContracts.oracle,
-  signersData: signersData,
   markets: ropstenContracts.markets,
-  primaryCurrency: primaryCurrency,
-  oracles: oracles,
-  reutersUrl: reutersUrl
-};
+  primaryCurrency: primaryCurrencyTest,
+  oracles: oraclesTest,
+  signersData: signersDataTest,
+  percentageChange: percentageChange,
+  destToken: ropstenContracts.DESTToken 
+}
