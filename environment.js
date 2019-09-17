@@ -85,5 +85,6 @@ module.exports.ropsten = {
   oracles: oraclesTest,
   signersData: signersDataTest,
   percentageChange: percentageChange,
-  destToken: ropstenContracts.DESTToken 
-}
+  destToken: ropstenContracts.DESTToken,
+  reutersUrl: reutersUrl 
+};
