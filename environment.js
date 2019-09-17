@@ -1,10 +1,10 @@
 const ropstenContracts = require('./ropstenContracts.js');
-const mainnetContracts = require('./mainnetContacts.js');
+const mainnetContracts = require('./mainnetContracts.js');
 
 const primaryCurrency = 'RCN';
 const primaryCurrencyTest = 'TEST';
 const oracles = ['ETH', 'BTC', 'USD', 'ARS','DAI','MANA'];
-const oraclesTest = ['ETH', 'DEST'];
+const oraclesTest = ['ETH'];
 const reutersUrl = 'https://www.reuters.com/assets/';
 const percentageChange = 1;
 
@@ -77,12 +77,13 @@ module.exports.main = {
 
 module.exports.ropsten = {
   node: ropstenContracts.nodes.infura,
-  TEST: ropstenContracts.TESTToken,
+  RCN: ropstenContracts.RCNToken,
   oracleFactory: ropstenContracts.oracleFactory,
   oracle: ropstenContracts.oracle,
   markets: ropstenContracts.markets,
   primaryCurrency: primaryCurrencyTest,
   oracles: oraclesTest,
   signersData: signersDataTest,
-  percentageChange: percentageChange 
+  percentageChange: percentageChange,
+  destToken: ropstenContracts.DESTToken 
 }

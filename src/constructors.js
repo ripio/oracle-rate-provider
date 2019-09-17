@@ -4,7 +4,6 @@ const env = require('../environment.js');
 
 const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
 
-
 module.exports.w3 = new W3(new W3.providers.HttpProvider(netEnv.node));
 
 
@@ -24,7 +23,7 @@ module.exports.instanceOracles = async (oracleFactory) => {
     if (oracleAddr === '0x0000000000000000000000000000000000000000') {
       console.log('\tCurrency: ' + symbol + ', the oracle dont exists');
     } else {
-      const oracle = new this.w3.eth.Contract(env.oracle.abi, oracleAddr);
+      const oracle = new this.w3.eth.Contract(netEnv.oracle.abi, oracleAddr);
       oracles[symbol] = oracle;
       console.log('\tCurrency: ' + symbol + ', Address: ' + oracleAddr);
     }

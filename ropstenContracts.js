@@ -4,7 +4,8 @@ module.exports.nodes = {
   local: 'http://localhost:8545',
 };
 
-module.exports.TESTToken = '0x2f45b6Fb2F28A73f110400386da31044b2e953D4';
+module.exports.RCNToken = '0x2f45b6Fb2F28A73f110400386da31044b2e953D4';
+module.exports.DESTToken = '0x6710d597fd13127a5b64eebe384366b12e66fdb6';
 
 module.exports.markets = {
   uniswap: {
