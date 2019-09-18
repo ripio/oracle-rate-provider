@@ -5,13 +5,14 @@ To run this project, install it locally using npm:
 
 Set the following arguments:
 
-* -p <pk>  'private keys'
-* -w <wait> ' 'The time to wait for a new provide' (optional)
-* -m <waitMarket> ' 'The time to wait to gather market data' (optional)
+* -p <pk>  'private key such as 0x126740...'
+* -w <wait> ' 'The time to wait for a new provide in minutes' (optional)
+* -m <waitMarket> ' 'The time to wait to gather market data in minutes' (optional)
+* -n <network> ' 'the network defaults to mainnet , ropsten option for test' (optional)
 
 ```
 $ npm install
-$ node index.js -p <pk> -w <wait> -m <waitMarket>
+$ node index.js -p <pk> -w <wait> -m <waitMarket> -n <network>
 
 ```
 
@@ -20,13 +21,14 @@ To run this project, install it locally using npm:
 
 Set the following arguments:
 
-* -f <filePk>  'private key'
-* -w <wait> ' 'The time to wait for a new provide' (optional)
-* -m <waitMarket> ' 'The time to wait to gather market data' (optional)
+* -f <filePk>  ''private key ['0x126740...']''
+* -w <wait> ' 'The time to wait for a new provide in minutes' (optional)
+* -m <waitMarket> ' 'The time to wait to gather market data in minutes' (optional)
+* -n <network> ' 'the network defaults to mainnet , ropsten option for test' (optional)
 
 ```
 $ npm install
-$ node index.js -p <pk> -w <wait> -m <waitMarket>
+$ node index.js -f <filePk> -w <wait> -m <waitMarket> -n <network>
 
 ```
 
@@ -38,8 +40,10 @@ Create a .env file with key-value pairs as follow:
 * PRIVATE_KEY=<private_key>
 * WAIT_TIME=<wait_time>
 * WAIT_MARKET=<wait_market>
+* NETWORK=<network>
 
 ```
+$docker-compose build 
 $docker-compose up 
 
 ```
@@ -62,8 +66,9 @@ Set the following arguments:
 * -k <key> ' key passphrase to decrypt keystoreFile' 
 * -w <wait> ' 'The time to wait for a new provide' (optional)
 * -m <waitMarket> ' 'The time to wait to gather market data' (optional)
+* -n <network> ' 'the network defaults to mainnet , ropsten option for test' (optional)
 
 ```
 $ npm install
-$ node index.js -a <address> -k <key> -w <wait> -m <waitMarket>
+$ node index.js -a <address> -k <key> -w <wait> -m <waitMarket> -n <network>
 ```
