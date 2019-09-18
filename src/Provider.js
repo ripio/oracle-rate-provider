@@ -228,18 +228,24 @@ module.exports = class Provider {
       if (!address) {
         console.log('Wrong address: ' + address);
       }
+      // Check decimals
+      const decimals = await this.oracles[symbol].methods.decimals().call();
+      if (!decimals) {
+        console.log('Wrong decimals: ' + decimals);
+      }
 
       const directRate = await this.getPair(this.primaryCurrency, symbol);
       let percentageChanged;
 
       if (directRate.rate != undefined) {
         // Get direct rate
-        medianRate = directRate.rate;
+        medianRate = this.bn(directRate.rate).mul(this.bn(10 ** decimals)).toString();
         percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
 
       } else {
         // Get indirect rate
-        medianRate = await this.getIndirectRate(symbol);
+        const indirectRate = await this.getIndirectRate(symbol);
+        medianRate = this.bn(indirectRate).mul(this.bn(10 ** decimals)).toString();
         percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
       }
 
