@@ -66,7 +66,10 @@ async function main() {
   program.parse(process.argv);
 
   // Initialize network
-  process.env.NETWORK = program.network;
+  if (!process.env.NETWORK) {
+    process.env.NETWORK = program.network;
+  }
+  console.log('Network: ', process.env.NETWORK);
   const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 
   const pk = program.PK ? program.PK : program.filePk ?

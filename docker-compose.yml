@@ -6,3 +6,5 @@ services:
     environment:  
       - WAIT=${WAIT_TIME}
       - PK=${PRIVATE_KEY}
+      - WAIT_MARKET=${WAIT_MARKET}
+      - NETWORK=${NETWORK}
