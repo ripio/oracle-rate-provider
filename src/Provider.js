@@ -193,7 +193,11 @@ module.exports = class Provider {
       if (!matchPairTo) {
         medianRate = this.bn(ratePrimary.rate).mul(this.bn(rateSymbol.rate)).div(this.bn(10 ** rateSymbol.decimals)).toString();
       } else {
-        medianRate = this.bn(ratePrimary.rate).mul(this.bn(10 ** rateSymbol.decimals)).div(this.bn(rateSymbol.rate)).toString();
+        if (rate.symbol != 0) {
+          medianRate = this.bn(ratePrimary.rate).mul(this.bn(10 ** rateSymbol.decimals)).div(this.bn(rateSymbol.rate)).toString();
+        } else {
+          medianRate = 0;
+        }
       }
       return medianRate;
     } else {
