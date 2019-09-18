@@ -21,7 +21,7 @@ async function provideTestRates(provider, signer, netEnv, provideAll) {
   await provider.provideRates(signer, env.ropsten.primaryCurrency, notMatchOracles, provideAll);
   signer.data = env.main.signersData;
 
-  console.log('Get Main Rates');
+  console.log('\n' + 'Get Main Rates');
   await provider.provideRates(signer, env.main.primaryCurrency, netEnv.oraclesFromMain, provideAll);
   signer.data = env.ropsten.signersData;
 }
@@ -66,7 +66,10 @@ async function main() {
   program.parse(process.argv);
 
   // Initialize network
-  process.env.NETWORK = program.network;
+  if (!process.env.NETWORK) {
+    process.env.NETWORK = program.network;
+  }
+  console.log('Network: ', process.env.NETWORK);
   const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 
   const pk = program.PK ? program.PK : program.filePk ?
@@ -85,7 +88,7 @@ async function main() {
   const waitMarket = process.env.WAIT_MARKET ? process.env.WAIT_MARKET : program.waitMarket;
 
   console.log('WAIT_NEXT_PROVIDE_ALL:', wait + 'm');
-  console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm');
+  console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm' + '\n' );
 
   // Initialize persitent storage
   await storage.init({

@@ -95,10 +95,15 @@ module.exports = class Provider {
         console.log('Wrong rate: ' + rate);
       }
     }
-    const medianRate = await this.getMedian(rates);
-    if (!medianRate) {
-      console.log('Dont have rates');
-      return;
+    let medianRate;
+    if (rates.length > 0) {
+      medianRate = await this.getMedian(rates);
+      if (!medianRate) {
+        console.log('Dont have rates');
+        return;
+      }
+    } else {
+      medianRate = 0;
     }
 
     console.log('Median Rate ' + currencydata.currency_from + '/' + currencydata.currency_to + ': ' + medianRate + '\n');
@@ -248,15 +253,16 @@ module.exports = class Provider {
         medianRate = this.bn(indirectRate).mul(this.bn(10 ** decimals)).toString();
         percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
       }
+      if (medianRate > 0) {
+        if (this.provideAll || percentageChanged) {
+          const symbolMedianRate = {
+            symbol: symbol,
+            oracle: address,
+            rate: medianRate
+          };
 
-      if (this.provideAll || percentageChanged) {
-        const symbolMedianRate = {
-          symbol: symbol,
-          oracle: address,
-          rate: medianRate
-        };
-
-        this.ratesToProvide.push(symbolMedianRate);
+          this.ratesToProvide.push(symbolMedianRate);
+        }
       }
     }
     return this.ratesToProvide;
@@ -327,7 +333,7 @@ module.exports = class Provider {
           oracles.push(c.oracle);
           rates.push(c.rate);
         }
-        gasEstimate = await this.oracleFactory.methods.provideMultiple(oracles,rates).estimateGas(
+        gasEstimate = await this.oracleFactory.methods.provideMultiple(oracles, rates).estimateGas(
           { from: signer.address }
         );
       }
@@ -344,7 +350,7 @@ module.exports = class Provider {
             { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
           );
         } else {
-          tx = await this.oracleFactory.methods.provideMultiple(oracles,rates).send(
+          tx = await this.oracleFactory.methods.provideMultiple(oracles, rates).send(
             { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
           );
         }
@@ -359,7 +365,7 @@ module.exports = class Provider {
       }
 
     } else {
-      console.log('No rates changed > 1 %');
+      console.log('No rates to provide or No rates changed > 1 %');
     }
   }
 };
