@@ -296,7 +296,8 @@ module.exports = class Provider {
       }
       console.log('Percentage Changed', percentageChanged.toString());
 
-      if (percentageChanged > this.netEnv.percentageChange) {
+      const absPc = Math.abs(percentageChanged);
+      if (absPc > this.netEnv.percentageChange) {
         // Update rate, add to send in tx
         abruptRateChanged = true;
       }
