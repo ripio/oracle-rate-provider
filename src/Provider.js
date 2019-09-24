@@ -223,7 +223,6 @@ module.exports = class Provider {
 
 
   async getOraclesRatesData() {
-    let ratesProvidedData = [];
 
     for (var symbol of this.oracleSymbols) {
       let medianRate;
@@ -322,33 +321,38 @@ module.exports = class Provider {
     await this.getMarketsRates(signer.data);
     this.logMarketMedianRates();
 
-    const oraclesRatesData = await this.getOraclesRatesData();
-    this.logRatesToProvide();
+    let oraclesRatesData;
+    try {
+      oraclesRatesData = await this.getOraclesRatesData();
+      this.logRatesToProvide();
+    } catch (e) {
+      console.log('error: ', e);
+    }
 
     if (oraclesRatesData.length > 0) {
-      const gasPrice = await this.w3.eth.getGasPrice();
-      if (oraclesRatesData.length == 1) {
-        provideOneOracle = this.ratesToProvide[0].oracle;
-        provideOneRate = this.ratesToProvide[0].rate;
-        gasEstimate = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).estimateGas(
-          { from: signer.address }
-        );
-      } else {
-        for (var c of oraclesRatesData) {
-          oracles.push(c.oracle);
-          rates.push(c.rate);
-        }
-        gasEstimate = await this.oracleFactory.methods.provideMultiple(oracles, rates).estimateGas(
-          { from: signer.address }
-        );
-      }
-
-      // 10% more than gas estimate
-      const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
-
-      console.log('Starting send transaction with marmo...');
-
       try {
+        const gasPrice = await this.w3.eth.getGasPrice();
+        if (oraclesRatesData.length == 1) {
+          provideOneOracle = this.ratesToProvide[0].oracle;
+          provideOneRate = this.ratesToProvide[0].rate;
+          gasEstimate = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).estimateGas(
+            { from: signer.address }
+          );
+        } else {
+          for (var c of oraclesRatesData) {
+            oracles.push(c.oracle);
+            rates.push(c.rate);
+          }
+          gasEstimate = await this.oracleFactory.methods.provideMultiple(oracles, rates).estimateGas(
+            { from: signer.address }
+          );
+        }
+
+        // 10% more than gas estimate
+        const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
+
+        console.log('Starting send transaction with marmo...');
+
         let tx;
         if (oraclesRatesData.length == 1) {
           tx = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).send(
