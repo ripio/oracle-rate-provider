@@ -85,7 +85,7 @@ module.exports = class Uniswap extends Market {
         rateFrom = this.bn(rateFromDest);  
 
         const rateDest = rateTo.add(rateFrom).div(this.bn(2)).div(amountInDest);
-        rate = this.bn(rateDest).mul(this.bn(10 ** decimals)).div(this.bn(rateTest));
+        rate = this.bn(rateTest).mul(this.bn(10 ** decimals)).div(this.bn(rateDest));
 
       }
       return rate.toString();
