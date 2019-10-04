@@ -1,9 +1,18 @@
-const program = require('commander');
 const Marmo = require('marmojs');
 const Provider = require('./src/Provider.js');
-const { sleep, importFromFile } = require('./src/utils.js');
 const storage = require('node-persist');
-const env = require('./environment.js');
+const Web3 = require('web3');
+const read = require('read');
+const util = require('util');
+const {
+  sleep,
+  importFromFile,
+  instanceSigners
+} = require('./src/utils.js');
+
+// Presets and constants
+const allPresets = require('./environment/presets.js');
+
 
 async function pkFromKeyStore(w3, address, key) {
   var keyObject = importFromFile(address);
@@ -13,116 +22,165 @@ async function pkFromKeyStore(w3, address, key) {
   return decrypted.privateKey;
 }
 
-async function provideTestRates(provider, signer, netEnv, provideAll) {
-
-  const notMatchOracles = env.ropsten.oracles.filter(c => !env.ropsten.oraclesFromMain.includes(c));
-
-  console.log('Get Test Rates');
-  await provider.provideRates(signer, env.ropsten.primaryCurrency, notMatchOracles, provideAll);
-  signer.data = env.main.signersData;
-
-  console.log('\n' + 'Get Main Rates');
-  await provider.provideRates(signer, env.main.primaryCurrency, netEnv.oraclesFromMain, provideAll);
-  signer.data = env.ropsten.signersData;
-}
-
 async function main() {
-  program
+  // Parse defaults
+  const defargv = require('yargs')
+    .env('RCNORACLE_')
     .option(
-      '-p, --PK <pk>',
-      'private keys'
-    )
-    .option(
-      '-f, --filePk <path>',
-      'The path of a file with the private key',
-      path => require(path)
-    )
-    .option(
-      '-w, --wait <wait>',
-      'The time to wait for a new provide',
-      360
-    )
-    .option(
-      '-m, --waitMarket <waitMarket>',
-      'The time to wait to gather market data',
-      3
-    )
-    .option(
-      '-k, --key <key>',
-      'key passphrase to decrypt keystoreFile',
-      ''
-    )
-    .option(
-      '-a, --address <address>',
-      'address of private key to decrypt keystoreFile',
-      ''
-    )
-    .option(
-      '-n, --network <network>',
-      'network',
-      'mainnet'
-    );
+      'n', {
+        alias: 'network',
+        required: false,
+        describe: 'Ethereum Network ID',
+        type: 'int',
+        default: 1
+      })
+    .argv;
 
-  program.parse(process.argv);
-
-  // Initialize network
-  if (!process.env.NETWORK) {
-    process.env.NETWORK = program.network;
+  const networkid = defargv.n;
+  console.info(`Starting oracle with Network ${networkid}`);
+  if (!allPresets[networkid]) {
+    console.error(`Network ID: ${networkid} not valid`);
+    process.exit(1);
   }
-  console.log('Network: ', process.env.NETWORK);
-  const { w3, instanceSigners, instanceOracleFactory, instanceOracles } = require('./src/constructors.js');
 
-  const pk = program.PK ? program.PK : program.filePk ?
-    program.filePk[0] : process.env.PK ? process.env.PK : await pkFromKeyStore(w3, program.address, program.key);
+  const presets = allPresets[networkid];
 
-  const oracleFactory = await instanceOracleFactory();
-  const oracles = await instanceOracles(oracleFactory);
-  let signer = await instanceSigners(pk);
+  // Parse program init parameters
+  const argv = require('yargs')
+    .env('RCNORACLE_')
+    .option('n', {
+      alias: 'network',
+      required: false,
+      describe: 'Ethereum Network ID',
+      type: 'int',
+      default: 1
+    })
+    .option('p', {
+      alias: 'private-key',
+      required: false,
+      describe: 'Private key for the relayer',
+      type: 'string',
+      default: undefined
+    })
+    .option('f', {
+      alias: 'file-pk',
+      required: false,
+      describe: 'Path of a file with the private key',
+      type: 'string'
+    })
+    .option('w', {
+      alias: 'wait',
+      describe: 'Wait time between each rate provide',
+      required: false,
+      type: 'int',
+      default: 3600
+    })
+    .option('wm', {
+      alias: 'wait-market',
+      describe: 'Wait time between each market read',
+      required: false,
+      type: 'int',
+      default: 21600000 // 6 hours
+    })
+    .option('k', {
+      alias: 'key',
+      describe: 'key passphrase to decrypt keystoreFile',
+      required: false,
+      type: 'string'
+    })
+    .option('a', {
+      alias: 'address',
+      describe: 'address of keystoreFile',
+      required: false,
+      type: 'string'
+    })
+    .option('c', {
+      alias: 'currencies',
+      descript: 'List of currencies to provide, separated by commas',
+      required: false,
+      type: 'string',
+      default: presets.defaultCurrencies.join(',')
+    })
+    .option('oc', {
+      alias: 'oracle-factory-contract',
+      descript: 'Oracle Factory contract address',
+      required: false,
+      type: 'string',
+      default: presets.contracts.oracleFactory
+    })
+    .option('uc', {
+      alias: 'uniswap-factory-contract',
+      descript: 'Uniswap Factory contract address',
+      required: false,
+      type: 'string',
+      default: presets.contracts.uniswapFactory
+    })
+    .option('t', {
+      alias: 'percentage-threshold',
+      descript: 'Percentage delta required to update the rate',
+      required: false,
+      type: 'int',
+      default: presets.percentageChange
+    })
+    .option('r', {
+      alias: 'rpc',
+      descript: 'Ethereum RPC node URL',
+      required: false,
+      type: 'string',
+      default: presets.node
+    })
+    .argv;
 
-  const provider = await new Provider(w3, oracleFactory, oracles).init();
+  // Initialize W3
+  const w3 = new Web3(new Web3.providers.HttpProvider(argv.rpc));
+
+  // Initialize account
+  let pk;
+  if (argv.privateKey) {
+    pk = argv.privateKey;
+  } else if (argv.filePk) {
+    // TODO Improve load pk from file
+    // Try to load pk from file
+    pk = await pkFromKeyStore(w3, argv.address, argv.key);
+  } else {
+    pk = await util.promisify(read)({
+      prompt: 'Private key: ',
+      silent: true,
+      replace: '*',
+    });
+  }
+
+  const signer = await instanceSigners(w3, pk);
+  console.info(`Using account: ${signer.address}`);
+
+  // Configure Marmo
+  // FIXME: Configure marmo for real
   Marmo.DefaultConf.ROPSTEN.asDefault();
 
-  const wait = process.env.WAIT ? process.env.WAIT : program.wait;
-  const waitMs = wait * 60 * 1000;
-
-  const waitMarket = process.env.WAIT_MARKET ? process.env.WAIT_MARKET : program.waitMarket;
-
-  console.log('WAIT_NEXT_PROVIDE_ALL:', wait + 'm');
-  console.log('WAIT_NEXT_GET_MARKET_DATA:', waitMarket + 'm' + '\n' );
+  // Start Provider
+  const provider = await new Provider(w3, argv).init();
 
   // Initialize persitent storage
   await storage.init({
     dir: './src/persistRates'
   });
 
-  const waitMarketData = waitMarket * 60 * 1000;
-  const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
 
   for (; ;) {
-    console.log('PROVIDE ALL');
-
-    if (process.env.NETWORK != 'mainnet') {
-      await provideTestRates(provider, signer, netEnv, true);
-    } else {
-      await provider.provideRates(signer, netEnv.primaryCurrency, netEnv.oracles, true);
-    }
-
-    console.log('Wait for next provide All: ' + wait + 'ms' + '\n');
-    await sleep(waitMarketData);
+    console.info('Start providing');
+    await provider.provideRates(signer);
+    console.log('Wait for next provide All: ' + argv.waitMarket + 'ms' + '\n');
+    await sleep(argv.waitMarket);
 
     let t = 0;
-    while (t < waitMs) {
+    while (t < argv.wait) {
       console.log('\n' + 'PROVIDE ONLY RATE CHANGE > 1%');
-      if (process.env.NETWORK != 'mainnet') {
-        await provideTestRates(provider, signer, netEnv, false);
-      } else {
-        await provider.provideRates(signer, netEnv.primaryCurrency, netEnv.oracles, false);
-      }
+      await provider.provideRates(signer);
 
-      console.log('Wait ' + waitMarket + 'm and gather market data again');
-      await sleep(waitMarketData);
+      console.log('Wait ' + argv.waitMarket + 'm and gather market data again');
+      await sleep(argv.waitMarket);
 
-      t += waitMarketData;
+      t += argv.waitMarket;
     }
 
   }
