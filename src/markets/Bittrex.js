@@ -8,8 +8,11 @@ module.exports = class Bittrex extends Market {
     this.market  = new ccxt[exchangeId];
   }
 
-  async getRate(currency) {
-    const pair = await this.market.fetchTicker('RCN/' + currency);
-    return this.toEquivalent(pair.last);
+  async getRate(currency_from, currency_to, decimals) {
+    const pair = await this.market.fetchTicker(currency_from + '/' + currency_to);
+
+    const rate = this.toEquivalent(pair.last, decimals);
+
+    return rate;
   }
 };
