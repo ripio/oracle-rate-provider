@@ -1,18 +1,25 @@
 const MarketsManager = require('./MarketsManager.js');
-const env = require('../environment.js');
 const storage = require('node-persist');
+const MultiSourceOracle = require('./contracts/MultiSourceOracle.js');
+const OracleFactory = require('./contracts/OracleFactory.js');
 
+const routes = require('../environment/routes.js');
+const constants = require('../environment/constants.js');
 
 module.exports = class Provider {
-  constructor(w3, oracleFactory, oracles) {
-    this.netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
+  constructor(w3, options) {
+    // Context
     this.w3 = w3;
-    this.oracleFactory = oracleFactory;
-    this.oracles = oracles;
+    this.options = options;
+    this.routes = routes[options.network];
+    this.symbols = options.currencies.split(',');
+    this.baseCurrency = constants[options.network].baseCurrency;
+    // Contracts
+    this.oracleFactory = new w3.eth.Contract(OracleFactory.abi, options.oracleFactoryContract);
+    // Variables
     this.MarketsManager = null;
     this.ratesProvided = [];
     this.ratesToProvide = [];
-    this.provideAll = false;
   }
 
   bn(number) {
@@ -34,7 +41,7 @@ module.exports = class Provider {
   logRatesToProvide() {
     console.log('\n');
     for (var provideRate of this.ratesToProvide) {
-      const log = 'Providing Median Rate for ' + this.netEnv.primaryCurrency + '/' + provideRate.symbol + ': ' + provideRate.rate;
+      const log = 'Providing Median Rate for ' + this.baseCurrency + '/' + provideRate.symbol + ': ' + provideRate.rate;
       console.log(log);
     }
   }
@@ -48,7 +55,28 @@ module.exports = class Provider {
 
   async init() {
     this.MarketsManager = await new MarketsManager(this.w3).init();
+    this.oracles = await this.loadOracles(this.symbols);
     return this;
+  }
+
+  async loadOracles(symbols) {
+    const oracles = [];
+
+    console.info('Loading oracles:');
+
+    for (const symbol of symbols) {
+      const oracleAddr = await this.oracleFactory.methods.symbolToOracle(symbol).call();
+
+      if (oracleAddr === '0x0000000000000000000000000000000000000000') {
+        console.log('\tCurrency: ' + symbol + ', the oracle dont exists');
+      } else {
+        const oracle = new this.w3.eth.Contract(MultiSourceOracle.abi, oracleAddr);
+        oracles[symbol] = oracle;
+        console.log('\tCurrency: ' + symbol + ', Address: ' + oracleAddr);
+      }
+    }
+
+    return oracles;
   }
 
   async getMedian(rates) {
@@ -87,7 +115,6 @@ module.exports = class Provider {
         exchangeId: exchange,
         decimals: currencydata.decimals
       };
-
       const rate = await marketManager.getRate(rateData);
       if (rate) {
         rates.push(rate);
@@ -119,11 +146,11 @@ module.exports = class Provider {
     this.ratesProvided.push(rateProvided);
   }
 
-  async getMarketsRates(data) {
+  async getMarketsRates() {
 
     console.log('Gathering Market data...');
 
-    for (var pair of data) {
+    for (var pair of this.routes) {
       await this.getMedianFromMarkets(pair);
     }
   }
@@ -172,7 +199,7 @@ module.exports = class Provider {
   }
 
   async getIndirectRate(symbol) {
-    const pairsToPrimary = await this.getPairsTo(this.primaryCurrency);
+    const pairsToPrimary = await this.getPairsTo(this.baseCurrency);
     const pairsFromSymbol = await this.getPairsFrom(symbol);
     const pairsToSymbol = await this.getPairsTo(symbol);
     let matchPairTo = false;
@@ -186,7 +213,7 @@ module.exports = class Provider {
 
     if (getIntersection.length > 0) {
       const matchSymbol = getIntersection[0];
-      const ratePrimary = await this.getPair(this.primaryCurrency, matchSymbol);
+      const ratePrimary = await this.getPair(this.baseCurrency, matchSymbol);
       const rateSymbol = await this.getPair(matchSymbol, symbol);
       let medianRate;
 
@@ -205,7 +232,7 @@ module.exports = class Provider {
         for (var cs of pairsFromSymbol) {
           const pair = await this.getPair(cp, cs);
           if (pair.rate != undefined) {
-            const primaryRate = await this.getPair(this.primaryCurrency, cp);
+            const primaryRate = await this.getPair(this.baseCurrency, cp);
             const symbolRate = await this.getPair(cs, symbol);
             const intermidateRate = pair.rate;
 
@@ -223,8 +250,7 @@ module.exports = class Provider {
 
 
   async getOraclesRatesData() {
-
-    for (var symbol of this.oracleSymbols) {
+    for (var symbol of this.symbols) {
       let medianRate;
 
       // Check currency
@@ -242,7 +268,7 @@ module.exports = class Provider {
         console.log('Wrong decimals: ' + decimals);
       }
 
-      const directRate = await this.getPair(this.primaryCurrency, symbol);
+      const directRate = await this.getPair(this.baseCurrency, symbol);
       let percentageChanged;
 
       if (directRate.rate != undefined) {
@@ -255,9 +281,11 @@ module.exports = class Provider {
         const indirectRate = await this.getIndirectRate(symbol);
         medianRate = this.bn(indirectRate).mul(this.bn(10 ** decimals)).toString();
         percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
+        console.log(percentageChanged);
       }
+
       if (medianRate > 0) {
-        if (this.provideAll || percentageChanged) {
+        if (percentageChanged) {
           const symbolMedianRate = {
             symbol: symbol,
             oracle: address,
@@ -274,7 +302,7 @@ module.exports = class Provider {
 
   async persistRates(ratesToProvide) {
     for (var currency of ratesToProvide) {
-      const pair = this.netEnv.primaryCurrency + '/' + currency.symbol;
+      const pair = this.baseCurrency + '/' + currency.symbol;
       await storage.setItem(pair, currency.rate);
     }
   }
@@ -282,7 +310,7 @@ module.exports = class Provider {
   async checkPercentageChanged(symbol, newRate) {
     let abruptRateChanged = false;
 
-    const pair = this.netEnv.primaryCurrency + '/' + symbol;
+    const pair = this.baseCurrency + '/' + symbol;
     const pr = await storage.getItem(pair);
     console.log('pair', pair);
 
@@ -296,29 +324,29 @@ module.exports = class Provider {
       console.log('Percentage Changed', percentageChanged.toString());
 
       const absPc = Math.abs(percentageChanged);
-      if (absPc > this.netEnv.percentageChange) {
+      if (absPc > this.options.percentageThreshold) {
         // Update rate, add to send in tx
         abruptRateChanged = true;
       }
+    } else {
+      console.log('Prev rate input not found');
+      return true;
     }
     console.log(abruptRateChanged);
     return abruptRateChanged;
   }
 
 
-  async provideRates(signer, pc, oraclesSymbols, provideAll) {
-    this.oracleSymbols = oraclesSymbols;
-    this.primaryCurrency = pc;
+  async provideRates(signer) {
     this.ratesProvided = [];
     this.ratesToProvide = [];
-    this.provideAll = provideAll;
     let provideOneOracle;
     let provideOneRate;
     let gasEstimate;
     let oracles = [];
     let rates = [];
 
-    await this.getMarketsRates(signer.data);
+    await this.getMarketsRates();
     this.logMarketMedianRates();
 
     let oraclesRatesData;
@@ -350,8 +378,6 @@ module.exports = class Provider {
 
         // 10% more than gas estimate
         const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
-
-        console.log('Starting send transaction with marmo...');
 
         let tx;
         if (oraclesRatesData.length == 1) {
