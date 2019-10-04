@@ -54,3 +54,17 @@ module.exports.importFromFile = (address, datadir, cb) => {
     return cb(JSON.parse(fs.readFileSync(filepath)));
   });
 };
+
+module.exports.instanceSigners = async (w3, pk) => {
+  if (!(pk)) throw new Error('There are no private keys to instance the signers: ' + pk);
+
+  let signer;
+  if (w3.utils.isHexStrict(pk)) {
+    signer = w3.eth.accounts.privateKeyToAccount(pk);
+    w3.eth.accounts.wallet.add(signer);
+  } else {
+    console.log('The private key its not valid: ' + pk);
+  }
+
+  return signer;
+};
