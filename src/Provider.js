@@ -280,7 +280,7 @@ module.exports = class Provider {
       }
 
       if (medianRate > 0) {
-        if (percentageChanged) {
+        if (percentageChanged || this.force) {
           const symbolMedianRate = {
             symbol: symbol,
             oracle: address,
@@ -332,9 +332,11 @@ module.exports = class Provider {
   }
 
 
-  async provideRates(signer) {
+  async provideRates(signer, force = false) {
     this.ratesProvided = [];
     this.ratesToProvide = [];
+    this.force = force;
+
     let provideOneOracle;
     let provideOneRate;
     let gasEstimate;
@@ -390,6 +392,8 @@ module.exports = class Provider {
         await this.persistRates(this.ratesToProvide);
 
         logger.info('txHash: ' + tx.transactionHash);
+
+        return true;
       } catch (e) {
         logger.info(' Error message: ' + e.message);
       }
@@ -397,5 +401,7 @@ module.exports = class Provider {
     } else {
       logger.info('No rates to provide or No rates changed > 1 %');
     }
+
+    return false;
   }
 };
