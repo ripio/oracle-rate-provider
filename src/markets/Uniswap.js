@@ -1,37 +1,29 @@
 const Market = require('./Market.js');
-
-const env = require('../../environment.js');
-
-const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
+const UniswapFactory = require('../contracts/UniswapFactory.js');
+const constants = require('../../environment/constants.js');
 
 module.exports = class Uniswap extends Market {
-  constructor(w3) {
+  constructor(w3, options) {
     super(w3);
-
     this.w3 = w3;
-    this.factory = new w3.eth.Contract(netEnv.markets.uniswap.factoryABI, netEnv.markets.uniswap.address);
-
-    this.otherExchange = new w3.eth.Contract(netEnv.markets.uniswap.exchangeABI);
-    this.rcnExchange = new w3.eth.Contract(netEnv.markets.uniswap.exchangeABI);
+    this.options = options;
+    this.factory = new w3.eth.Contract(UniswapFactory.abi, options.uniswapFactoryAddress);
     this.WEI = this.bn('1000000000000000000');
   }
 
   async init() {
-    const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
-    this.rcnExchange.address = await this.factory.methods.getExchange(netEnv.RCN).call();
+    const base = constants[this.options.network].baseToken;
+    this.rcnExchange.address = await this.factory.methods.getExchange(base).call();
     return this;
   }
 
   async getRate(currency_from, currency_to, decimals) {
-
     let rate;
-    const W3 = require('web3');
     if (process.env.NETWORK == 'mainnet') {
-
       // TODO remove this when use in mainnet
       // change to mainnet netEnv
-      const w3 = new W3(new W3.providers.HttpProvider('https://mainnet.infura.io/v3/f6427a6723594cdd8affb596d357d268'));
-      this.rcnExchange = new w3.eth.Contract(netEnv.markets.uniswap.exchangeABI, '0xD91FF16Ef92568fC27F466C3c5613e43313Ab1dc');
+      // const w3 = new W3(new W3.providers.HttpProvider('https://mainnet.infura.io/v3/f6427a6723594cdd8affb596d357d268'));
+      // this.rcnExchange = new w3.eth.Contract(netEnv.markets.uniswap.exchangeABI, '0xD91FF16Ef92568fC27F466C3c5613e43313Ab1dc');
       // TODO_END
 
       if (currency_to === 'ETH') {
@@ -51,7 +43,6 @@ module.exports = class Uniswap extends Market {
     }
 
     if (process.env.NETWORK == 'ropsten') {
-      const w3 = new W3(new W3.providers.HttpProvider(netEnv.node));
       const rcnExchange = await new w3.eth.Contract(netEnv.markets.uniswap.exchangeABI, this.rcnExchange.address);
 
       // console.log(rcnExchange);
@@ -77,12 +68,12 @@ module.exports = class Uniswap extends Market {
 
         const amountInDest = this.bn('1000');// TODO think this amount
         const amountInWEI = this.WEI.mul(amountInDest);
-  
+
         let rateToDest = await destExchange.methods.getEthToTokenOutputPrice(amountInWEI.toString()).call();
         rateTo = this.bn(rateToDest);
-  
+
         let rateFromDest = await destExchange.methods.getTokenToEthInputPrice(amountInWEI.toString()).call();
-        rateFrom = this.bn(rateFromDest);  
+        rateFrom = this.bn(rateFromDest);
 
         const rateDest = rateTo.add(rateFrom).div(this.bn(2)).div(amountInDest);
         rate = this.bn(rateTest).mul(this.bn(10 ** decimals)).div(this.bn(rateDest));
