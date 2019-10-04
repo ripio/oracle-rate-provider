@@ -6,6 +6,8 @@ const OracleFactory = require('./contracts/OracleFactory.js');
 const routes = require('../environment/routes.js');
 const constants = require('../environment/constants.js');
 
+const logger = require('./logger.js');
+
 module.exports = class Provider {
   constructor(w3, options) {
     // Context
@@ -34,22 +36,21 @@ module.exports = class Provider {
   logRates(providedData, signer) {
     for (var currencyData of providedData) {
       const log = 'Provide(signer: ' + signer.address + ',  oracle: ' + currencyData.oracle + ',  rate: ' + currencyData.rate + ')';
-      console.log(log);
+      logger.info(log);
     }
   }
 
   logRatesToProvide() {
-    console.log('\n');
     for (var provideRate of this.ratesToProvide) {
       const log = 'Providing Median Rate for ' + this.baseCurrency + '/' + provideRate.symbol + ': ' + provideRate.rate;
-      console.log(log);
+      logger.info(log);
     }
   }
 
   logMarketMedianRates() {
     for (var currencyData of this.ratesProvided) {
       const log = 'Median Rate ' + currencyData.currency_from + '/' + currencyData.currency_to + ': ' + currencyData.rate + ' from markets: ' + currencyData.markets;
-      console.log(log);
+      logger.info(log);
     }
   }
 
@@ -62,17 +63,17 @@ module.exports = class Provider {
   async loadOracles(symbols) {
     const oracles = [];
 
-    console.info('Loading oracles:');
+    logger.info('Loading oracles:');
 
     for (const symbol of symbols) {
       const oracleAddr = await this.oracleFactory.methods.symbolToOracle(symbol).call();
 
       if (oracleAddr === '0x0000000000000000000000000000000000000000') {
-        console.log('\tCurrency: ' + symbol + ', the oracle dont exists');
+        logger.info('\tCurrency: ' + symbol + ', the oracle dont exists');
       } else {
         const oracle = new this.w3.eth.Contract(MultiSourceOracle.abi, oracleAddr);
         oracles[symbol] = oracle;
-        console.log('\tCurrency: ' + symbol + ', Address: ' + oracleAddr);
+        logger.info('\tCurrency: ' + symbol + ', Address: ' + oracleAddr);
       }
     }
 
@@ -100,9 +101,6 @@ module.exports = class Provider {
   }
 
   async getMedianFromMarkets(currencydata) {
-
-    console.log('Getting ' + currencydata.currency_from + '/' + currencydata.currency_to + ' rates...');
-
     const marketManager = this.MarketsManager;
 
     let rates = [];
@@ -116,24 +114,21 @@ module.exports = class Provider {
         decimals: currencydata.decimals
       };
       const rate = await marketManager.getRate(rateData);
-      if (rate) {
-        rates.push(rate);
-      } else {
-        console.log('Wrong rate: ' + rate);
-      }
+      if (rate) { rates.push(rate); }
     }
+
     let medianRate;
     if (rates.length > 0) {
       medianRate = await this.getMedian(rates);
       if (!medianRate) {
-        console.log('Dont have rates');
+        logger.info('Dont have rates');
         return;
       }
     } else {
       medianRate = 0;
     }
 
-    console.log('Median Rate ' + currencydata.currency_from + '/' + currencydata.currency_to + ': ' + medianRate + '\n');
+    logger.info('Median Rate ' + currencydata.currency_from + '/' + currencydata.currency_to + ': ' + medianRate);
 
     const rateProvided = {
       currency_from: currencydata.currency_from,
@@ -148,7 +143,7 @@ module.exports = class Provider {
 
   async getMarketsRates() {
 
-    console.log('Gathering Market data...');
+    logger.info('Gathering Market data...');
 
     for (var pair of this.routes) {
       await this.getMedianFromMarkets(pair);
@@ -255,17 +250,17 @@ module.exports = class Provider {
 
       // Check currency
       if (!this.oracles[symbol]) {
-        console.log('Wrong currency: ' + symbol);
+        logger.info('Wrong currency: ' + symbol);
       }
       // Check address
       const address = this.oracles[symbol]._address;
       if (!address) {
-        console.log('Wrong address: ' + address);
+        logger.info('Wrong address: ' + address);
       }
       // Check decimals
       const decimals = await this.oracles[symbol].methods.decimals().call();
       if (!decimals) {
-        console.log('Wrong decimals: ' + decimals);
+        logger.info('Wrong decimals: ' + decimals);
       }
 
       const directRate = await this.getPair(this.baseCurrency, symbol);
@@ -281,7 +276,7 @@ module.exports = class Provider {
         const indirectRate = await this.getIndirectRate(symbol);
         medianRate = this.bn(indirectRate).mul(this.bn(10 ** decimals)).toString();
         percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
-        console.log(percentageChanged);
+        logger.info(percentageChanged);
       }
 
       if (medianRate > 0) {
@@ -312,7 +307,6 @@ module.exports = class Provider {
 
     const pair = this.baseCurrency + '/' + symbol;
     const pr = await storage.getItem(pair);
-    console.log('pair', pair);
 
     if (pr) {
       let percentageChanged;
@@ -321,7 +315,7 @@ module.exports = class Provider {
       } else {
         percentageChanged = ((newRate / pr) - 1) * 100;
       }
-      console.log('Percentage Changed', percentageChanged.toString());
+      logger.info('Percentage Changed', percentageChanged.toString());
 
       const absPc = Math.abs(percentageChanged);
       if (absPc > this.options.percentageThreshold) {
@@ -329,10 +323,11 @@ module.exports = class Provider {
         abruptRateChanged = true;
       }
     } else {
-      console.log('Prev rate input not found');
+      logger.info(`Prev rate for ${symbol} input not found`);
       return true;
     }
-    console.log(abruptRateChanged);
+
+    logger.info(abruptRateChanged);
     return abruptRateChanged;
   }
 
@@ -354,7 +349,7 @@ module.exports = class Provider {
       oraclesRatesData = await this.getOraclesRatesData();
       this.logRatesToProvide();
     } catch (e) {
-      console.log('error: ', e);
+      logger.info('error: ', e);
     }
 
     if (oraclesRatesData.length > 0) {
@@ -394,13 +389,13 @@ module.exports = class Provider {
 
         await this.persistRates(this.ratesToProvide);
 
-        console.log('txHash: ' + tx.transactionHash);
+        logger.info('txHash: ' + tx.transactionHash);
       } catch (e) {
-        console.log(' Error message: ' + e.message);
+        logger.info(' Error message: ' + e.message);
       }
 
     } else {
-      console.log('No rates to provide or No rates changed > 1 %');
+      logger.info('No rates to provide or No rates changed > 1 %');
     }
   }
 };
