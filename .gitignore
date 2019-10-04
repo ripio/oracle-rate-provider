@@ -2,3 +2,4 @@
 /package-lock.json
 /src/persistRates
 .vscode
+.provider.log
