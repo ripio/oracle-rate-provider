@@ -7,6 +7,8 @@ const Kraken = require('./markets/Kraken.js');
 const Gemini = require('./markets/Gemini.js');
 const Reuters = require('./markets/Reuters.js');
 
+const logger = require('./logger.js');
+
 module.exports = class MarketsManager {
   constructor(w3, options) {
     this.w3 = w3;
@@ -38,7 +40,7 @@ module.exports = class MarketsManager {
     try {
       rate = await this.markets[data.exchangeId].getRate(data.currency_from, data.currency_to, data.decimals);
     } catch (e) {
-      console.log('Error message: ' + e.message);
+      logger.warn(`Error loading rate ${data.currency_from}/${data.currency_to} from ${data.exchangeId}: ${e.toString().split('\n')[0]}`);
     }
 
     return rate;

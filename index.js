@@ -4,6 +4,8 @@ const storage = require('node-persist');
 const Web3 = require('web3');
 const read = require('read');
 const util = require('util');
+const logger = require('./src/logger.js');
+
 const {
   sleep,
   importFromFile,
@@ -37,9 +39,9 @@ async function main() {
     .argv;
 
   const networkid = defargv.n;
-  console.info(`Starting oracle with Network ${networkid}`);
+  logger.info(`Starting oracle provider on Network ${networkid}`);
   if (!allPresets[networkid]) {
-    console.error(`Network ID: ${networkid} not valid`);
+    logger.error(`Network ID: ${networkid} not valid`);
     process.exit(1);
   }
 
@@ -151,7 +153,7 @@ async function main() {
   }
 
   const signer = await instanceSigners(w3, pk);
-  console.info(`Using account: ${signer.address}`);
+  logger.info(`Using account: ${signer.address}`);
 
   // Configure Marmo
   // FIXME: Configure marmo for real
@@ -167,17 +169,17 @@ async function main() {
 
 
   for (; ;) {
-    console.info('Start providing');
+    logger.info('Start providing');
     await provider.provideRates(signer);
-    console.log('Wait for next provide All: ' + argv.waitMarket + 'ms' + '\n');
+    logger.info('Wait for next provide All: ' + argv.waitMarket + 'ms');
     await sleep(argv.waitMarket);
 
     let t = 0;
     while (t < argv.wait) {
-      console.log('\n' + 'PROVIDE ONLY RATE CHANGE > 1%');
+      logger.info('Trying to provide rates');
       await provider.provideRates(signer);
 
-      console.log('Wait ' + argv.waitMarket + 'm and gather market data again');
+      logger.info('Wait ' + argv.waitMarket + 'm and gather market data again');
       await sleep(argv.waitMarket);
 
       t += argv.waitMarket;
