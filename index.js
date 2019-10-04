@@ -72,17 +72,17 @@ async function main() {
     })
     .option('w', {
       alias: 'wait',
-      describe: 'Wait time between each rate provide',
+      describe: 'Wait time between each rate check (in secs)',
       required: false,
       type: 'int',
-      default: 3600
+      default: 45
     })
-    .option('wm', {
-      alias: 'wait-market',
-      describe: 'Wait time between each market read',
+    .option('mw', {
+      alias: 'max-wait',
+      describe: 'Max wait time between each provide, forces a provide (in secs)',
       required: false,
       type: 'int',
-      default: 21600000 // 6 hours
+      default: 21600 // 6 hours
     })
     .option('k', {
       alias: 'key',
@@ -167,24 +167,31 @@ async function main() {
     dir: './src/persistRates'
   });
 
+  let lastUpdate = new Date().getTime();
 
+  logger.info('Start providing');
   for (; ;) {
-    logger.info('Start providing');
-    await provider.provideRates(signer);
-    logger.info('Wait for next provide All: ' + argv.waitMarket + 'ms');
-    await sleep(argv.waitMarket);
-
-    let t = 0;
-    while (t < argv.wait) {
-      logger.info('Trying to provide rates');
-      await provider.provideRates(signer);
-
-      logger.info('Wait ' + argv.waitMarket + 'm and gather market data again');
-      await sleep(argv.waitMarket);
-
-      t += argv.waitMarket;
+    // Track if lastUpdate exceeded arg.maxWait
+    // and force and update if that's the case
+    const forceProvide = new Date().getTime() - lastUpdate > 1000 * argv.maxWait;
+    if (forceProvide) {
+      logger.info(`Force rate update because of time delta ${argv.maxWait}`);
     }
 
+    // Try to provide rates and save if we provided anything
+    try {
+      const provided = await provider.provideRates(signer, forceProvide);
+      if (provided) {
+        // Update when was the last provide made
+        lastUpdate = new Date().getTime();
+      }
+    } catch (e) {
+      logger.warn(`Failed to try provide rates: ${e.toString().split('\n')[0]}`);
+    }
+
+    // Sleep until the next check
+    logger.info(`Wait for next provide ${argv.wait} secs`);
+    await sleep(argv.wait * 1000);
   }
 }
 
