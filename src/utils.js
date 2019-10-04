@@ -2,7 +2,6 @@ module.exports.sleep = async (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-
 /**
   * Import key data object from keystore JSON file.
   * @param {string} address Ethereum address to import.
@@ -63,7 +62,7 @@ module.exports.instanceSigners = async (w3, pk) => {
     signer = w3.eth.accounts.privateKeyToAccount(pk);
     w3.eth.accounts.wallet.add(signer);
   } else {
-    console.log('The private key its not valid: ' + pk);
+    console.error('The private key its not valid: ' + pk);
   }
 
   return signer;
