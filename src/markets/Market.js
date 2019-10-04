@@ -7,8 +7,9 @@ module.exports = class Market {
     return this.w3.utils.toBN(number);
   }
 
-  toEquivalent (rate) {
-    return this.bn(rate * 10 ** 18).toString();
+
+  toEquivalent (rate, decimals) {
+    return this.bn(parseInt(rate * (10 ** decimals))).toString();
   }
 
   async getRate() {
