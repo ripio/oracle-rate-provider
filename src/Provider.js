@@ -7,6 +7,7 @@ const routes = require('../environment/routes.js');
 const constants = require('../environment/constants.js');
 
 const logger = require('./logger.js');
+const bn = require('./bn.js');
 
 module.exports = class Provider {
   constructor(w3, options) {
@@ -22,10 +23,6 @@ module.exports = class Provider {
     this.MarketsManager = null;
     this.ratesProvided = [];
     this.ratesToProvide = [];
-  }
-
-  bn(number) {
-    return this.w3.utils.toBN(number);
   }
 
   toUint96(number) {
@@ -89,10 +86,10 @@ module.exports = class Provider {
     rates.sort();
 
     if (rateLen % 2 === 0) {
-      const num1 = this.bn(rates[this.bn(rateLen).div(this.bn(2)) - 1]);
-      const num2 = this.bn(rates[this.bn(rateLen).div(this.bn(2))]);
+      const num1 = bn(rates[bn(rateLen).div(bn(2)) - 1]);
+      const num2 = bn(rates[bn(rateLen).div(bn(2))]);
 
-      median = (num1.add(num2)).div(this.bn(2)).toString();
+      median = (num1.add(num2)).div(bn(2)).toString();
     } else {
       median = rates[(rateLen - 1) / 2];
     }
@@ -213,10 +210,10 @@ module.exports = class Provider {
       let medianRate;
 
       if (!matchPairTo) {
-        medianRate = this.bn(ratePrimary.rate).mul(this.bn(rateSymbol.rate)).div(this.bn(10 ** rateSymbol.decimals)).toString();
+        medianRate = bn(ratePrimary.rate).mul(bn(rateSymbol.rate)).div(bn(10 ** rateSymbol.decimals)).toString();
       } else {
         if (rateSymbol.rate != 0) {
-          medianRate = this.bn(ratePrimary.rate).mul(this.bn(10 ** rateSymbol.decimals)).div(this.bn(rateSymbol.rate)).toString();
+          medianRate = bn(ratePrimary.rate).mul(bn(10 ** rateSymbol.decimals)).div(bn(rateSymbol.rate)).toString();
         } else {
           medianRate = 0;
         }
@@ -231,8 +228,8 @@ module.exports = class Provider {
             const symbolRate = await this.getPair(cs, symbol);
             const intermidateRate = pair.rate;
 
-            const medianRate = this.bn(primaryRate.rate).mul(this.bn(symbolRate.rate)).mul(this.bn(intermidateRate)).toString();
-            const medianRateDecimals = this.bn(medianRate).div(this.bn(10 ** symbolRate.decimals)).div(this.bn(10 ** pair.decimals)).toString();
+            const medianRate = bn(primaryRate.rate).mul(bn(symbolRate.rate)).mul(bn(intermidateRate)).toString();
+            const medianRateDecimals = bn(medianRate).div(bn(10 ** symbolRate.decimals)).div(bn(10 ** pair.decimals)).toString();
             return medianRateDecimals;
           }
         }
@@ -246,54 +243,61 @@ module.exports = class Provider {
 
   async getOraclesRatesData() {
     for (var symbol of this.symbols) {
-      let medianRate;
+      try {
+        let medianRate;
 
-      // Check currency
-      if (!this.oracles[symbol]) {
-        logger.info('Wrong currency: ' + symbol);
-      }
-      // Check address
-      const address = this.oracles[symbol]._address;
-      if (!address) {
-        logger.info('Wrong address: ' + address);
-      }
-      // Check decimals
-      const decimals = await this.oracles[symbol].methods.decimals().call();
-      if (!decimals) {
-        logger.info('Wrong decimals: ' + decimals);
-      }
-
-      const directRate = await this.getPair(this.baseCurrency, symbol);
-      let percentageChanged;
-
-      if (directRate.rate != undefined) {
-        // Get direct rate
-        medianRate = this.bn(directRate.rate).mul(this.bn(10 ** decimals)).toString();
-        percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
-
-      } else {
-        // Get indirect rate
-        const indirectRate = await this.getIndirectRate(symbol);
-        medianRate = this.bn(indirectRate).mul(this.bn(10 ** decimals)).toString();
-        percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
-        logger.info(percentageChanged);
-      }
-
-      if (medianRate > 0) {
-        if (percentageChanged || this.force) {
-          const symbolMedianRate = {
-            symbol: symbol,
-            oracle: address,
-            rate: medianRate
-          };
-
-          this.ratesToProvide.push(symbolMedianRate);
+        // Check currency
+        if (!this.oracles[symbol]) {
+          logger.info('Wrong currency: ' + symbol);
         }
+        // Check address
+        const address = this.oracles[symbol]._address;
+        if (!address) {
+          logger.info('Wrong address: ' + address);
+        }
+        // Check decimals
+        const decimals = await this.oracles[symbol].methods.decimals().call();
+        if (!decimals) {
+          logger.info('Wrong decimals: ' + decimals);
+        }
+
+        const directRate = await this.getPair(this.baseCurrency, symbol);
+        let percentageChanged;
+
+        if (directRate.rate != undefined) {
+          // Get direct rate
+          medianRate = bn(directRate.rate).mul(bn(10 ** decimals)).toString();
+          percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
+
+        } else {
+          // Get indirect rate
+          const indirectRate = await this.getIndirectRate(symbol);
+          medianRate = bn(indirectRate).mul(bn(10 ** decimals)).toString();
+          percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
+          logger.info(percentageChanged);
+        }
+
+        if (medianRate > 0) {
+          if (percentageChanged || this.force) {
+            const symbolMedianRate = {
+              symbol: symbol,
+              oracle: address,
+              rate: medianRate
+            };
+
+            this.ratesToProvide.push(symbolMedianRate);
+          }
+        }
+      } catch (e) {
+        logger.warn(`Error loading rate for ${symbol} - ${e.message}`);
       }
     }
+
+    // FIXME: It's using the provider state to store the ratesToProvide
+    // but it also returns the list when called, mixed approach should be avoided
+    // and replace with a pure functional paradigm
     return this.ratesToProvide;
   }
-
 
   async persistRates(ratesToProvide) {
     for (var currency of ratesToProvide) {
@@ -331,73 +335,59 @@ module.exports = class Provider {
     return abruptRateChanged;
   }
 
+  buildProvideTx(rates) {
+    if (rates.length === 1) {
+      return this.oracleFactory.methods.provide(
+        rates[0].oracle,
+        rates[0].rate
+      );
+    } else {
+      return this.oracleFactory.methods.provideMultiple(
+        rates.map(r => r.oracle),
+        rates.map(r => r.rate)
+      );
+    }
+  }
+
+  async sendProvideTx(rates, from) {
+    if (rates.length === 0) {
+      logger.info('No rates to provide');
+    }
+
+    const tx = this.buildProvideTx(rates);
+    // Add 10% to the estimated gas limit
+    const gasLimit = bn(await tx.estimateGas({ from: from.address })).mul(bn(110)).div(bn(100));
+    // Add 2.01% to the estimated gas price
+    const gasPrice = bn(await this.w3.eth.getGasPrice()).mul(bn(10201)).div(bn(10000));
+    return tx.send({ from: from.address, gas: gasLimit, gasPrice: gasPrice });
+  }
 
   async provideRates(signer, force = false) {
+    // Reset provider internal state
+    // FIXME: If those state variables are always reseted when provideRates is called
+    // they shouldn't be stored on object scope
     this.ratesProvided = [];
     this.ratesToProvide = [];
     this.force = force;
 
-    let provideOneOracle;
-    let provideOneRate;
-    let gasEstimate;
-    let oracles = [];
-    let rates = [];
-
+    // Load market rates into the provider internal state
+    // FIXME: avoid using provider internal state, take function approach
     await this.getMarketsRates();
     this.logMarketMedianRates();
 
-    let oraclesRatesData;
-    try {
-      oraclesRatesData = await this.getOraclesRatesData();
-      this.logRatesToProvide();
-    } catch (e) {
-      logger.info('error: ', e);
-    }
-
+    // Calculate Oracle rates for all requested pairs
+    const oraclesRatesData = await this.getOraclesRatesData();
     if (oraclesRatesData.length > 0) {
       try {
-        const gasPrice = await this.w3.eth.getGasPrice();
-        if (oraclesRatesData.length == 1) {
-          provideOneOracle = this.ratesToProvide[0].oracle;
-          provideOneRate = this.ratesToProvide[0].rate;
-          gasEstimate = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).estimateGas(
-            { from: signer.address }
-          );
-        } else {
-          for (var c of oraclesRatesData) {
-            oracles.push(c.oracle);
-            rates.push(c.rate);
-          }
-          gasEstimate = await this.oracleFactory.methods.provideMultiple(oracles, rates).estimateGas(
-            { from: signer.address }
-          );
-        }
-
-        // 10% more than gas estimate
-        const moreGasEstimate = (gasEstimate * 1.1).toFixed(0);
-
-        let tx;
-        if (oraclesRatesData.length == 1) {
-          tx = await this.oracleFactory.methods.provide(provideOneOracle, provideOneRate).send(
-            { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-          );
-        } else {
-          tx = await this.oracleFactory.methods.provideMultiple(oracles, rates).send(
-            { from: signer.address, gas: moreGasEstimate, gasPrice: gasPrice }
-          );
-        }
-
+        const tx = await this.sendProvideTx(oraclesRatesData, signer);
         this.logRates(this.ratesToProvide, signer);
-
         await this.persistRates(this.ratesToProvide);
-
         logger.info('txHash: ' + tx.transactionHash);
 
         return true;
       } catch (e) {
-        logger.info(' Error message: ' + e.message);
+        logger.warn(`Error providing rates ${e.message}`);
       }
-
     } else {
       logger.info('No rates to provide or No rates changed > 1 %');
     }
