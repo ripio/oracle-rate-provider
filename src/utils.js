@@ -2,6 +2,8 @@ module.exports.sleep = async (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
+module.exports.address0x = '0x0000000000000000000000000000000000000000';
+
 /**
   * Import key data object from keystore JSON file.
   * @param {string} address Ethereum address to import.

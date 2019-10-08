@@ -8,6 +8,7 @@ const constants = require('../environment/constants.js');
 
 const logger = require('./logger.js');
 const bn = require('./bn.js');
+const utils = require('./utils.js');
 
 module.exports = class Provider {
   constructor(w3, options) {
@@ -45,7 +46,7 @@ module.exports = class Provider {
   }
 
   async init() {
-    this.MarketsManager = await new MarketsManager(this.w3).init();
+    this.MarketsManager = await new MarketsManager(this.w3, this.options).init();
     this.oracles = await this.loadOracles(this.symbols);
     return this;
   }
@@ -58,7 +59,7 @@ module.exports = class Provider {
     for (const symbol of symbols) {
       const oracleAddr = await this.oracleFactory.methods.symbolToOracle(symbol).call();
 
-      if (oracleAddr === '0x0000000000000000000000000000000000000000') {
+      if (oracleAddr === utils.address0x) {
         logger.info('\tCurrency: ' + symbol + ', the oracle dont exists');
       } else {
         const oracle = new this.w3.eth.Contract(MultiSourceOracle.abi, oracleAddr);
@@ -132,7 +133,6 @@ module.exports = class Provider {
   }
 
   async getMarketsRates() {
-
     logger.info('Gathering Market data...');
     let ratesProvided = [];
     for (var pair of this.routes) {
