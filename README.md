@@ -3,32 +3,20 @@
 ## Run project using command arguments
 To run this project, install it locally using npm:
 
-Set the following arguments:
-
-* -p <pk>  'private key such as 0x126740...'
-* -w <wait> ' 'The time to wait for a new provide in minutes' (optional)
-* -m <waitMarket> ' 'The time to wait to gather market data in minutes' (optional)
-* -n <network> ' 'the network defaults to mainnet , ropsten option for test' (optional)
-
-```
-$ npm install
-$ node index.js -p <pk> -w <wait> -m <waitMarket> -n <network>
-
-```
-
-## Run project using file for private key
-To run this project, install it locally using npm:
-
-Set the following arguments:
-
-* -f <filePk>  ''private key ['0x126740...']''
-* -w <wait> ' 'The time to wait for a new provide in minutes' (optional)
-* -m <waitMarket> ' 'The time to wait to gather market data in minutes' (optional)
-* -n <network> ' 'the network defaults to mainnet , ropsten option for test' (optional)
+Available init parameters in CLI:
+* -p <private-key>  'Private key for the relayer such as 0x126740...' (required)
+* -n <network> ' 'Ethereum Network ID - default: 1 (mainnet), 3 (ropsten)' 
+* -w <wait> ' 'Wait time between each rate check (in secs) -  default: 45' 
+* -mw <max-wait> ' 'Max wait time between each provide, forces a provide (in secs) -  default: 21600 (6 hours)'
+* -c <currencies> ' 'List of currencies to provide, separated by commas'
+* -oc <oracle-factory-contract> ' 'Oracle Factory contract address' 
+* -uc <uniswap-factory-contract> ' 'Uniswap Factory contract address' 
+* -t <percentage-threshold> ' 'Percentage delta required to update the rate' 
+* -r <rpc> ' 'Ethereum RPC node URL' 
 
 ```
 $ npm install
-$ node index.js -f <filePk> -w <wait> -m <waitMarket> -n <network>
+$ node index.js -p <private-key> -w <wait> -wm <max-wait> -n <network> ...
 
 ```
 
@@ -37,10 +25,15 @@ You need to have docker and docker-compose previously installed:
 
 Create a .env file with key-value pairs as follow:
 
-* PRIVATE_KEY=<private_key>
-* WAIT_TIME=<wait_time>
-* WAIT_MARKET=<wait_market>
-* NETWORK=<network>
+* RCNORACLE_PRIVATE_KEY==<private_key> (required)
+* RCNORACLE_NETWORK=<network>
+* RCNORACLE_WAIT=<wait>
+* RCNORACLE_MAX_WAIT=<max-wait>
+* RCNORACLE_CURRENCIES=<currencies>
+* RCNORACLE_ORACLE_FACTORY_CONTRACT=<oracle-factory-contract>
+* RCNORACLE_ORACLE_FACTORY_CONTRACT=<uniswap-factory-contract>
+* RCNORACLE_PERCENTAGE_THRESHOLD=<percentage-threshold>
+* RCNORACLE_RPC=<rpc>
 
 ```
 $docker-compose build 
@@ -62,11 +55,19 @@ $ geth account import ./key.prv
 Next, to run this project, install it locally using npm:
 Set the following arguments:
 
-* -a <address>  'address of private key to decrypt keystoreFile' 
+* -p <private-key>  'Private key for the relayer such as 0x126740...' (required)
+* -f <private-key>  'File key for the relayer such as [0x126740...]' (required)
+* -n <network> ' 'Ethereum Network ID - default: 1 (mainnet), 3 (ropsten)' 
+* -w <wait> ' 'Wait time between each rate check (in secs) -  default: 45' 
+* -mw <max-wait> ' 'Max wait time between each provide, forces a provide (in secs) -  default: 21600 (6 hours)'
+* -a <address>  'address of keystoreFile' 
 * -k <key> ' key passphrase to decrypt keystoreFile' 
-* -w <wait> ' 'The time to wait for a new provide' (optional)
-* -m <waitMarket> ' 'The time to wait to gather market data' (optional)
-* -n <network> ' 'the network defaults to mainnet , ropsten option for test' (optional)
+* -c <currencies> ' 'List of currencies to provide, separated by commas'
+* -oc <oracle-factory-contract> ' 'Oracle Factory contract address' 
+* -uc <uniswap-factory-contract> ' 'Uniswap Factory contract address' 
+* -t <percentage-threshold> ' 'Percentage delta required to update the rate' 
+* -r <rpc> ' 'Ethereum RPC node URL' 
+
 
 ```
 $ npm install
