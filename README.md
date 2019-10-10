@@ -42,9 +42,9 @@ $docker-compose up
 ```
 
 ## Run project using keystore-file for private key
-You need to have geth (go-ethereum) previously installed to import account from private key and generate keystore-file.
+You need to have a private key in keystore-file format or use geth (go-ethereum) to import account from private key and generate one.
 
-Steps:
+Steps to create a new keystore-file:
 * Create a file with the private key in hex such as 0x126740... 
 * Use the geth console to import account and set passphrase: 
 ```
@@ -55,13 +55,10 @@ $ geth account import ./key.prv
 Next, to run this project, install it locally using npm:
 Set the following arguments:
 
-* -p <private-key>  'Private key for the relayer such as 0x126740...' (required)
-* -f <private-key>  'File key for the relayer such as [0x126740...]' (required)
+* -f <file-path>  'File key for the relayer in keystore-file format (Ex: /home/User/UTC--2019-09-04T21-10-18.268682738Z--e057277d76... )' (required)
 * -n <network> ' 'Ethereum Network ID - default: 1 (mainnet), 3 (ropsten)' 
 * -w <wait> ' 'Wait time between each rate check (in secs) -  default: 45' 
 * -mw <max-wait> ' 'Max wait time between each provide, forces a provide (in secs) -  default: 21600 (6 hours)'
-* -a <address>  'address of keystoreFile' 
-* -k <key> ' key passphrase to decrypt keystoreFile' 
 * -c <currencies> ' 'List of currencies to provide, separated by commas'
 * -oc <oracle-factory-contract> ' 'Oracle Factory contract address' 
 * -uc <uniswap-factory-contract> ' 'Uniswap Factory contract address' 
@@ -71,5 +68,6 @@ Set the following arguments:
 
 ```
 $ npm install
-$ node index.js -a <address> -k <key> -w <wait> -m <waitMarket> -n <network>
+$ node index.js -f <file-path> -w <wait> -m <waitMarket> -n <network> ...
+$ Key: <passphrase>
 ```
