@@ -3,7 +3,11 @@ module.exports = {
     exchanges: {
       reuters: {
         url: 'https://www.reuters.com/assets/'
+      },
+      ripioExchangeApi: {
+        url:'https://api.exchange.ripio.com/api/v1/usd/'
       }
+
     }
   },
   1: {
