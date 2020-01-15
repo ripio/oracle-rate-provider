@@ -10,7 +10,7 @@ module.exports = class Reuters extends Market {
 
   async getRate(currency_from, currency_to, decimals) {
 
-    const BASE_URL = constants.exchanges.reuters.url;
+    const BASE_URL = constants.shared.exchanges.reuters.url;
     const queryCurrencies = 'jsonCurrencyConverter?' + 'srcCurr=' + currency_from + '&destCurr=' + currency_to;
 
     try {
