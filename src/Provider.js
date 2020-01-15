@@ -8,6 +8,7 @@ const constants = require('../environment/constants.js');
 
 const logger = require('./logger.js');
 const bn = require('./bn.js');
+const utils = require('./utils.js');
 
 module.exports = class Provider {
   constructor(w3, options) {
@@ -37,22 +38,15 @@ module.exports = class Provider {
     }
   }
 
-  logRatesToProvide() {
-    for (var provideRate of this.ratesToProvide) {
-      const log = 'Providing Median Rate for ' + this.baseCurrency + '/' + provideRate.symbol + ': ' + provideRate.rate;
-      logger.info(log);
-    }
-  }
-
-  logMarketMedianRates() {
-    for (var currencyData of this.ratesProvided) {
+  logMarketMedianRates(ratesProvided) {
+    for (var currencyData of ratesProvided) {
       const log = 'Median Rate ' + currencyData.currency_from + '/' + currencyData.currency_to + ': ' + currencyData.rate + ' from markets: ' + currencyData.markets;
       logger.info(log);
     }
   }
 
   async init() {
-    this.MarketsManager = await new MarketsManager(this.w3).init();
+    this.MarketsManager = await new MarketsManager(this.w3, this.options).init();
     this.oracles = await this.loadOracles(this.symbols);
     return this;
   }
@@ -65,7 +59,7 @@ module.exports = class Provider {
     for (const symbol of symbols) {
       const oracleAddr = await this.oracleFactory.methods.symbolToOracle(symbol).call();
 
-      if (oracleAddr === '0x0000000000000000000000000000000000000000') {
+      if (oracleAddr === utils.address0x) {
         logger.info('\tCurrency: ' + symbol + ', the oracle dont exists');
       } else {
         const oracle = new this.w3.eth.Contract(MultiSourceOracle.abi, oracleAddr);
@@ -135,23 +129,23 @@ module.exports = class Provider {
       decimals: currencydata.decimals
     };
 
-    this.ratesProvided.push(rateProvided);
+    return rateProvided;
   }
 
   async getMarketsRates() {
-
     logger.info('Gathering Market data...');
-
+    let ratesProvided = [];
     for (var pair of this.routes) {
-      await this.getMedianFromMarkets(pair);
+      const rateProvided = await this.getMedianFromMarkets(pair);
+      ratesProvided.push(rateProvided);
     }
+    return ratesProvided;
   }
 
-  async getPairsFrom(to) {
-    const marketRates = this.ratesProvided;
+  async getPairsFrom(to, ratesProvided) {
     let pairsFrom = [];
 
-    for (var mkr of marketRates) {
+    for (var mkr of ratesProvided) {
       if (mkr.currency_to == to) {
         pairsFrom.push(mkr.currency_from);
       }
@@ -159,11 +153,10 @@ module.exports = class Provider {
     return pairsFrom;
   }
 
-  async getPairsTo(from) {
-    const marketRates = this.ratesProvided;
+  async getPairsTo(from, ratesProvided) {
     let pairsTo = [];
 
-    for (var mkr of marketRates) {
+    for (var mkr of ratesProvided) {
       if (mkr.currency_from == from) {
         pairsTo.push(mkr.currency_to);
       }
@@ -171,14 +164,11 @@ module.exports = class Provider {
     return pairsTo;
   }
 
-  async getPair(from, to) {
-    const marketRates = this.ratesProvided;
-
-    for (var mkr of marketRates) {
-      if (mkr.currency_from == from && mkr.currency_to == to) {
-        return mkr;
-      }
-      if (mkr.currency_from == to && mkr.currency_to == from) {
+  async getPair(from, to, ratesProvided) {
+    for (var mkr of ratesProvided) {
+      if (mkr.currency_from == from && mkr.currency_to == to || 
+        mkr.currency_from == to && mkr.currency_to == from
+      ) {
         return mkr;
       }
     }
@@ -190,10 +180,10 @@ module.exports = class Provider {
     return matchCurrency;
   }
 
-  async getIndirectRate(symbol) {
-    const pairsToPrimary = await this.getPairsTo(this.baseCurrency);
-    const pairsFromSymbol = await this.getPairsFrom(symbol);
-    const pairsToSymbol = await this.getPairsTo(symbol);
+  async getIndirectRate(symbol, ratesProvided) {
+    const pairsToPrimary = await this.getPairsTo(this.baseCurrency, ratesProvided);
+    const pairsFromSymbol = await this.getPairsFrom(symbol, ratesProvided);
+    const pairsToSymbol = await this.getPairsTo(symbol, ratesProvided);
     let matchPairTo = false;
 
     let getIntersection = await this.getIntersection(pairsToPrimary, pairsFromSymbol);
@@ -205,8 +195,8 @@ module.exports = class Provider {
 
     if (getIntersection.length > 0) {
       const matchSymbol = getIntersection[0];
-      const ratePrimary = await this.getPair(this.baseCurrency, matchSymbol);
-      const rateSymbol = await this.getPair(matchSymbol, symbol);
+      const ratePrimary = await this.getPair(this.baseCurrency, matchSymbol, ratesProvided);
+      const rateSymbol = await this.getPair(matchSymbol, symbol, ratesProvided);
       let medianRate;
 
       if (!matchPairTo) {
@@ -222,10 +212,10 @@ module.exports = class Provider {
     } else {
       for (var cp of pairsToPrimary) {
         for (var cs of pairsFromSymbol) {
-          const pair = await this.getPair(cp, cs);
+          const pair = await this.getPair(cp, cs, ratesProvided);
           if (pair.rate != undefined) {
-            const primaryRate = await this.getPair(this.baseCurrency, cp);
-            const symbolRate = await this.getPair(cs, symbol);
+            const primaryRate = await this.getPair(this.baseCurrency, cp, ratesProvided);
+            const symbolRate = await this.getPair(cs, symbol, ratesProvided);
             const intermidateRate = pair.rate;
 
             const medianRate = bn(primaryRate.rate).mul(bn(symbolRate.rate)).mul(bn(intermidateRate)).toString();
@@ -235,13 +225,13 @@ module.exports = class Provider {
         }
       }
     }
-
     const err = '';
     return err;
   }
 
 
-  async getOraclesRatesData() {
+  async getOraclesRatesData(ratesProvided) {
+    let oraclesRatesData = [];
     for (var symbol of this.symbols) {
       try {
         let medianRate;
@@ -261,7 +251,7 @@ module.exports = class Provider {
           logger.info('Wrong decimals: ' + decimals);
         }
 
-        const directRate = await this.getPair(this.baseCurrency, symbol);
+        const directRate = await this.getPair(this.baseCurrency, symbol, ratesProvided);
         let percentageChanged;
 
         if (directRate.rate != undefined) {
@@ -271,7 +261,7 @@ module.exports = class Provider {
 
         } else {
           // Get indirect rate
-          const indirectRate = await this.getIndirectRate(symbol);
+          const indirectRate = await this.getIndirectRate(symbol, ratesProvided);
           medianRate = bn(indirectRate).mul(bn(10 ** decimals)).toString();
           percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
           logger.info(percentageChanged);
@@ -285,18 +275,14 @@ module.exports = class Provider {
               rate: medianRate
             };
 
-            this.ratesToProvide.push(symbolMedianRate);
+            oraclesRatesData.push(symbolMedianRate);
           }
         }
       } catch (e) {
         logger.warn(`Error loading rate for ${symbol} - ${e.message}`);
       }
     }
-
-    // FIXME: It's using the provider state to store the ratesToProvide
-    // but it also returns the list when called, mixed approach should be avoided
-    // and replace with a pure functional paradigm
-    return this.ratesToProvide;
+    return oraclesRatesData;
   }
 
   async persistRates(ratesToProvide) {
@@ -363,25 +349,19 @@ module.exports = class Provider {
   }
 
   async provideRates(signer, force = false) {
-    // Reset provider internal state
-    // FIXME: If those state variables are always reseted when provideRates is called
-    // they shouldn't be stored on object scope
-    this.ratesProvided = [];
-    this.ratesToProvide = [];
     this.force = force;
 
-    // Load market rates into the provider internal state
-    // FIXME: avoid using provider internal state, take function approach
-    await this.getMarketsRates();
-    this.logMarketMedianRates();
+    // Get Market Rates
+    const ratesProvided = await this.getMarketsRates();
+    this.logMarketMedianRates(ratesProvided);
 
     // Calculate Oracle rates for all requested pairs
-    const oraclesRatesData = await this.getOraclesRatesData();
+    const oraclesRatesData = await this.getOraclesRatesData(ratesProvided);
     if (oraclesRatesData.length > 0) {
       try {
         const tx = await this.sendProvideTx(oraclesRatesData, signer);
-        this.logRates(this.ratesToProvide, signer);
-        await this.persistRates(this.ratesToProvide);
+        this.logRates(oraclesRatesData, signer);
+        await this.persistRates(oraclesRatesData);
         logger.info('txHash: ' + tx.transactionHash);
 
         return true;

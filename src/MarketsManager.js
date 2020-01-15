@@ -6,6 +6,7 @@ const HitBTC = require('./markets/HitBTC.js');
 const Kraken = require('./markets/Kraken.js');
 const Gemini = require('./markets/Gemini.js');
 const Reuters = require('./markets/Reuters.js');
+const Uniswap = require('./markets/Uniswap.js');
 
 const logger = require('./logger.js');
 
@@ -18,8 +19,7 @@ module.exports = class MarketsManager {
 
   async init() {
     this.markets['binance'] = new Binance(this.w3, 'binance');
-    // TODO: Re-do uniswap
-    // this.markets['uniswap'] = await new Uniswap(this.w3).init(this.options);
+    this.markets['uniswap'] = await new Uniswap(this.w3, this.options).init();
     this.markets['huobipro'] = await new HuobiPro(this.w3, 'huobipro');
     this.markets['bittrex'] = await new Bittrex(this.w3, 'bittrex');
     this.markets['upbit'] = await new Upbit(this.w3, 'upbit');
