@@ -6,6 +6,7 @@ const primaryCurrencyTest = 'TEST';
 const oracles = ['ETH', 'BTC', 'USD', 'ARS','DAI','MANA'];
 const oraclesTest = ['ETH', 'BTC', 'USD', 'ARS','DAI','MANA','DEST'];
 const reutersUrl = 'https://www.reuters.com/assets/';
+const ripioExchangeApi = 'https://api.exchange.ripio.com/api/v1/usd/';
 const percentageChange = 1;
 const oraclesFromMain = ['BTC', 'USD', 'ARS','DAI','MANA'];
 
@@ -31,7 +32,7 @@ const signersData = [
   {
     currency_from: 'USD',
     currency_to: 'ARS',
-    exchangesIds: ['reuters'],
+    exchangesIds: ['ripioExchangeApi'],
     decimals: 2
   },
   {
@@ -73,6 +74,7 @@ module.exports.main = {
   oracles: oracles,
   signersData: signersData,
   reutersUrl: reutersUrl,
+  ripioExchangeApi: ripioExchangeApi,
   percentageChange: percentageChange
 };
 
@@ -88,5 +90,6 @@ module.exports.ropsten = {
   percentageChange: percentageChange,
   destToken: ropstenContracts.DESTToken,
   reutersUrl: reutersUrl,
+  ripioExchangeApi: ripioExchangeApi,
   oraclesFromMain: oraclesFromMain 
 };

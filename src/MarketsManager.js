@@ -7,6 +7,7 @@ const HitBTC = require('./markets/HitBTC.js');
 const Kraken = require('./markets/Kraken.js');
 const Gemini = require('./markets/Gemini.js');
 const Reuters = require('./markets/Reuters.js');
+const RipioExchangeApi = require('./markets/RipioExchangeApi.js');
 
 module.exports = class MarketsManager {
   constructor(w3) {
@@ -25,6 +26,7 @@ module.exports = class MarketsManager {
     this.markets['kraken'] = await new Kraken(this.w3, 'kraken');
     this.markets['gemini'] = await new Gemini(this.w3, 'gemini');
     this.markets['reuters'] = await new Reuters(this.w3);
+    this.markets['ripioExchangeApi'] = await new RipioExchangeApi(this.w3);
 
 
     return this;
