@@ -8,7 +8,6 @@ const logger = require('./src/logger.js');
 
 const {
   sleep,
-  importFromFile,
   instanceSigners
 } = require('./src/utils.js');
 
@@ -16,12 +15,23 @@ const {
 const allPresets = require('./environment/presets.js');
 
 
-async function pkFromKeyStore(w3, address, key) {
-  var keyObject = importFromFile(address);
+async function pkFromKeyStore(w3, filepath) {
+  try {
+    var fs = require('fs');
+    var keyObject = JSON.parse(fs.readFileSync(filepath));  
 
-  const decrypted = w3.eth.accounts.decrypt(keyObject, key);
+    var key = await util.promisify(read)({
+      prompt: 'Key: ',
+      silent: true,
+      replace: '*',
+    });
 
-  return decrypted.privateKey;
+    const decrypted = w3.eth.accounts.decrypt(keyObject, key);
+    return decrypted.privateKey;
+  } catch (err) {
+    logger.info(`Can't get private key from filepath: ${filepath}`);
+  }
+  return;
 }
 
 async function main() {
@@ -141,10 +151,9 @@ async function main() {
   if (argv.privateKey) {
     pk = argv.privateKey;
   } else if (argv.filePk) {
-    // TODO Improve load pk from file
-    // Try to load pk from file
-    pk = await pkFromKeyStore(w3, argv.address, argv.key);
-  } else {
+    pk = await pkFromKeyStore(w3, argv.filePk);
+  }
+  if (!pk) {
     pk = await util.promisify(read)({
       prompt: 'Private key: ',
       silent: true,
