@@ -3,7 +3,11 @@ module.exports = {
     exchanges: {
       reuters: {
         url: 'https://www.reuters.com/assets/'
+      },
+      ripioExchangeApi: {
+        url:'https://api.exchange.ripio.com/api/v1/usd/'
       }
+
     }
   },
   1: {
@@ -15,4 +19,3 @@ module.exports = {
     baseToken: '0x2f45b6Fb2F28A73f110400386da31044b2e953D4'
   }
 };
-
