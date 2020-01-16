@@ -111,12 +111,9 @@ module.exports = class Provider {
     let medianRate;
     if (rates.length > 0) {
       medianRate = await this.getMedian(rates);
-      if (!medianRate) {
-        logger.info('Dont have rates');
-        return;
-      }
     } else {
-      medianRate = 0;
+      logger.info('Dont have rates');
+      return;
     }
 
     logger.info('Median Rate ' + currencydata.currency_from + '/' + currencydata.currency_to + ': ' + medianRate);
@@ -137,7 +134,9 @@ module.exports = class Provider {
     let ratesProvided = [];
     for (var pair of this.routes) {
       const rateProvided = await this.getMedianFromMarkets(pair);
-      ratesProvided.push(rateProvided);
+      if(rateProvided) {
+        ratesProvided.push(rateProvided);
+      }
     }
     return ratesProvided;
   }
@@ -264,7 +263,6 @@ module.exports = class Provider {
           const indirectRate = await this.getIndirectRate(symbol, ratesProvided);
           medianRate = bn(indirectRate).mul(bn(10 ** decimals)).toString();
           percentageChanged = await this.checkPercentageChanged(symbol, medianRate);
-          logger.info(percentageChanged);
         }
 
         if (medianRate > 0) {
@@ -305,7 +303,6 @@ module.exports = class Provider {
       } else {
         percentageChanged = ((newRate / pr) - 1) * 100;
       }
-      logger.info('Percentage Changed', percentageChanged.toString());
 
       const absPc = Math.abs(percentageChanged);
       if (absPc > this.options.percentageThreshold) {
@@ -316,8 +313,6 @@ module.exports = class Provider {
       logger.info(`Prev rate for ${symbol} input not found`);
       return true;
     }
-
-    logger.info(abruptRateChanged);
     return abruptRateChanged;
   }
 
