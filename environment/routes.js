@@ -21,7 +21,7 @@ module.exports = {
     {
       currency_from: 'USD',
       currency_to: 'ARS',
-      exchangesIds: ['reuters'],
+      exchangesIds: ['ripioExchangeApi'],
       decimals: 2
     },
     {
