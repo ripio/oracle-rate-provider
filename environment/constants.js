@@ -15,6 +15,9 @@ module.exports = {
       },
       satoshiTango: {
         url:'https://api.satoshitango.com/v3/ticker/'
+      },
+      coinMonitor: {
+        url:'https://coinmonitor.info/data_ar.json'
       }
     }
   },

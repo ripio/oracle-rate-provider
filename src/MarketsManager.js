@@ -10,6 +10,7 @@ const RipioExchangeApi = require('./markets/RipioExchangeApi.js');
 const Ripio = require('./markets/Ripio.js');
 const Bitex = require('./markets/Bitex.js');
 const SatoshiTango = require('./markets/SatoshiTango.js');
+const CoinMonitor = require('./markets/CoinMonitor.js');
 const Uniswap = require('./markets/Uniswap.js');
 
 const logger = require('./logger.js');
@@ -35,6 +36,7 @@ module.exports = class MarketsManager {
     this.markets['ripio'] = await new Ripio(this.w3);
     this.markets['bitex'] = await new Bitex(this.w3);
     this.markets['satoshiTango'] = await new SatoshiTango(this.w3);
+    this.markets['coinMonitor'] = await new CoinMonitor(this.w3);
     return this;
   }
 

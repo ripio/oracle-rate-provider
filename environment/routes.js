@@ -21,7 +21,7 @@ module.exports = {
     {
       currency_from: 'BTC',
       currency_to: 'ARS',
-      exchangesIds: ['ripio', 'satoshiTango', 'bitex', 'coinmonitor'],
+      exchangesIds: ['ripio', 'satoshiTango', 'bitex', 'coinMonitor'],
       decimals: 2
     },
     {
