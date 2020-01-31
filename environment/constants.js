@@ -6,6 +6,10 @@ module.exports = {
       },
       ripioExchangeApi: {
         url:'https://api.exchange.ripio.com/api/v1/usd/'
+      },
+
+      ripio: {
+        url:'https://ripio.com/api/v1/rates/'
       }
 
     }

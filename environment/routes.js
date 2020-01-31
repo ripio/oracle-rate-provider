@@ -19,9 +19,9 @@ module.exports = {
       decimals: 2
     },
     {
-      currency_from: 'USD',
+      currency_from: 'BTC',
       currency_to: 'ARS',
-      exchangesIds: ['ripioExchangeApi'],
+      exchangesIds: ['ripio', 'satoshiTango', 'bitex', 'coinmonitor'],
       decimals: 2
     },
     {
