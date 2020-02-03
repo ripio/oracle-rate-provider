@@ -9,7 +9,10 @@ module.exports = class Binanace extends Market {
   }
 
   async getRate(currency_from, currency_to, decimals) {
-    const pair = await this.market.fetchTicker(currency_from + '/' + currency_to);
+
+    const curreny_to_target = currency_to == 'USD' ? 'USDT' : currency_to;
+
+    const pair = await this.market.fetchTicker(currency_from + '/' + curreny_to_target);
     
     const rate = this.toEquivalent(pair.info.lastPrice, decimals);
 
