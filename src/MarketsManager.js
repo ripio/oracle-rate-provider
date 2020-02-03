@@ -13,6 +13,7 @@ const SatoshiTango = require('./markets/SatoshiTango.js');
 const CoinMonitor = require('./markets/CoinMonitor.js');
 const Bitfinex = require('./markets/Bitfinex.js');
 const Coinbase = require('./markets/Coinbase.js');
+const BitFlyer = require('./markets/BitFlyer.js');
 const Uniswap = require('./markets/Uniswap.js');
 
 const logger = require('./logger.js');
@@ -41,6 +42,7 @@ module.exports = class MarketsManager {
     this.markets['coinMonitor'] = await new CoinMonitor(this.w3);
     this.markets['bitfinex'] = await new Bitfinex(this.w3, 'bitfinex');
     this.markets['coinbase'] = await new Coinbase(this.w3, 'coinbase');
+    this.markets['bitflyer'] = await new BitFlyer(this.w3, 'bitflyer');
     return this;
   }
 
