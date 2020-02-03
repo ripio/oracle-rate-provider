@@ -15,7 +15,7 @@ module.exports = {
     {
       currency_from: 'BTC',
       currency_to: 'USD',
-      exchangesIds: ['bittrex', 'kraken', 'gemini', 'bitfinex', 'binance'],
+      exchangesIds: ['bittrex', 'kraken', 'gemini', 'bitfinex', 'binance', 'coinbase'],
       decimals: 2
     },
     {
