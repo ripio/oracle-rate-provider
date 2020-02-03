@@ -15,6 +15,7 @@ const Bitfinex = require('./markets/Bitfinex.js');
 const Coinbase = require('./markets/Coinbase.js');
 const BitFlyer = require('./markets/BitFlyer.js');
 const BitStamp = require('./markets/BitStamp.js');
+const Poloniex = require('./markets/Poloniex.js');
 const Uniswap = require('./markets/Uniswap.js');
 
 const logger = require('./logger.js');
@@ -45,6 +46,7 @@ module.exports = class MarketsManager {
     this.markets['coinbase'] = await new Coinbase(this.w3, 'coinbase');
     this.markets['bitflyer'] = await new BitFlyer(this.w3, 'bitflyer');
     this.markets['bitstamp'] = await new BitStamp(this.w3, 'bitstamp');
+    this.markets['poloniex'] = await new Poloniex(this.w3, 'poloniex');
     return this;
   }
 
