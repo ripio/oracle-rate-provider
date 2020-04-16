@@ -2,6 +2,7 @@ module.exports.sleep = async (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
+module.exports.address0x = '0x0000000000000000000000000000000000000000';
 
 /**
   * Import key data object from keystore JSON file.
@@ -53,4 +54,18 @@ module.exports.importFromFile = (address, datadir, cb) => {
     }
     return cb(JSON.parse(fs.readFileSync(filepath)));
   });
+};
+
+module.exports.instanceSigners = async (w3, pk) => {
+  if (!(pk)) throw new Error('There are no private keys to instance the signers: ' + pk);
+
+  let signer;
+  if (w3.utils.isHexStrict(pk)) {
+    signer = w3.eth.accounts.privateKeyToAccount(pk);
+    w3.eth.accounts.wallet.add(signer);
+  } else {
+    console.error('The private key its not valid: ' + pk);
+  }
+
+  return signer;
 };

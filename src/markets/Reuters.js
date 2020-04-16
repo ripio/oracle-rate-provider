@@ -1,8 +1,6 @@
 const Market = require('./Market.js');
-const env = require('../../environment.js');
+const constants = require('../../environment/constants.js');
 const axios = require('axios');
-
-const netEnv = process.env.NETWORK == 'mainnet' ? env.main : env.ropsten;
 
 module.exports = class Reuters extends Market {
 
@@ -12,11 +10,11 @@ module.exports = class Reuters extends Market {
 
   async getRate(currency_from, currency_to, decimals) {
 
-    const BASE_URL = netEnv.reutersUrl;
+    const BASE_URL = constants.shared.exchanges.reuters.url;
     const queryCurrencies = 'jsonCurrencyConverter?' + 'srcCurr=' + currency_from + '&destCurr=' + currency_to;
 
     try {
-      
+
       const res = await axios.get(`${BASE_URL}${queryCurrencies}`);
 
       const pair = res.data;
