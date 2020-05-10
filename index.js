@@ -44,7 +44,7 @@ async function main() {
         required: false,
         describe: 'Ethereum Network ID',
         type: 'int',
-        default: 1
+        default: 3
       })
     .argv;
 
@@ -65,7 +65,7 @@ async function main() {
       required: false,
       describe: 'Ethereum Network ID',
       type: 'int',
-      default: 1
+      default: 3
     })
     .option('p', {
       alias: 'private-key',
