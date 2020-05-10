@@ -11,9 +11,9 @@ module.exports = {
     ]
   },
   3: {
-    node: 'https://ropsten-node.rcn.loans/',
+    node: '',
     contracts: {
-      oracleFactory: '0xf9d4771CBE3C3808f3DfF633Cd6BE738F7f419EA',
+      oracleFactory: '0x92072A2d46363D8C0301c5a0b94c465d9A24bE63',
       uniswapFactory: '0x9c83dCE8CA20E9aAF9D3efc003b2ea62aBC08351'
     },
     percentageChange: 1,
@@ -24,7 +24,7 @@ module.exports = {
       'ARS',
       'DAI',
       'MANA',
-      'DEST'
+      'USDC'
     ]
   }
 };
