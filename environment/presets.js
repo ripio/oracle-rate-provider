@@ -5,9 +5,9 @@ module.exports = {
       oracleFactory: '0x1101c52fc25dc6d2691cec4b06569cef3c83933c',
       uniswapFactory: '0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95'
     },
-    percentageChange: 1,
+    percentageChange: 2,
     defaultCurrencies: [
-      'USD'
+      'ARS'
     ]
   },
   3: {
