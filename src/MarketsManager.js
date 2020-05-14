@@ -7,6 +7,15 @@ const Kraken = require('./markets/Kraken.js');
 const Gemini = require('./markets/Gemini.js');
 const Reuters = require('./markets/Reuters.js');
 const RipioExchangeApi = require('./markets/RipioExchangeApi.js');
+const Ripio = require('./markets/Ripio.js');
+const Bitex = require('./markets/Bitex.js');
+const SatoshiTango = require('./markets/SatoshiTango.js');
+const CoinMonitor = require('./markets/CoinMonitor.js');
+const Bitfinex = require('./markets/Bitfinex.js');
+const Coinbase = require('./markets/Coinbase.js');
+const BitFlyer = require('./markets/BitFlyer.js');
+const BitStamp = require('./markets/BitStamp.js');
+const Poloniex = require('./markets/Poloniex.js');
 const Uniswap = require('./markets/Uniswap.js');
 
 const logger = require('./logger.js');
@@ -29,6 +38,15 @@ module.exports = class MarketsManager {
     this.markets['gemini'] = await new Gemini(this.w3, 'gemini');
     this.markets['reuters'] = await new Reuters(this.w3);
     this.markets['ripioExchangeApi'] = await new RipioExchangeApi(this.w3);
+    this.markets['ripio'] = await new Ripio(this.w3);
+    this.markets['bitex'] = await new Bitex(this.w3);
+    this.markets['satoshiTango'] = await new SatoshiTango(this.w3);
+    this.markets['coinMonitor'] = await new CoinMonitor(this.w3);
+    this.markets['bitfinex'] = await new Bitfinex(this.w3, 'bitfinex');
+    this.markets['coinbase'] = await new Coinbase(this.w3, 'coinbase');
+    this.markets['bitflyer'] = await new BitFlyer(this.w3, 'bitflyer');
+    this.markets['bitstamp'] = await new BitStamp(this.w3, 'bitstamp');
+    this.markets['poloniex'] = await new Poloniex(this.w3, 'poloniex');
     return this;
   }
 
